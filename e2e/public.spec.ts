@@ -86,3 +86,20 @@ test("mobil menyu @mobile", async ({ page }) => {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow).toBeLessThanOrEqual(1);
 });
+
+test("mobil: pastki “murojaat” paneli @mobile", async ({ page }) => {
+  await page.goto("/advokatlar");
+  // Birinchi ekranda yashirin (asosiy tugma bilan takrorlanmasin; aria-hidden — ekran oʻqigichlar uchun ham)
+  const hidden = page.getByRole("link", { name: "Bepul murojaat qoldirish", includeHidden: true });
+  await expect(hidden).toHaveAttribute("tabindex", "-1");
+  await expect(page.getByRole("link", { name: "Bepul murojaat qoldirish" })).toHaveCount(0);
+  // Aylantirgandan keyin chiqadi
+  await page.evaluate(() => window.scrollTo(0, 900));
+  const cta = page.getByRole("link", { name: "Bepul murojaat qoldirish" });
+  await expect(cta).toHaveAttribute("tabindex", "0");
+  await expect(cta).toBeInViewport();
+  await cta.click();
+  await expect(page).toHaveURL(/\/murojaat$/);
+  // Murojaat sahifasining oʻzida panel yoʻq
+  await expect(page.getByRole("link", { name: "Bepul murojaat qoldirish" })).toHaveCount(0);
+});

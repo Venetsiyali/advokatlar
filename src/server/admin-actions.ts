@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { sanitizeRichHtml } from "@/lib/sanitize";
@@ -9,11 +8,12 @@ import { STATIC_SLUGS } from "@/lib/static-pages";
 import { latinToCyrillic, latinToCyrillicKeep, slugify } from "@/lib/translit";
 import { site } from "@/lib/site";
 import { audit, requireAdmin } from "./admin";
+import { revalidatePublic } from "./cache";
 import type { ActionResult } from "./cabinet-actions";
 import { adminAssign, adminCancel, adminRedispatch, recomputeLawyerRating } from "./matching";
 import { notifyLawyerModeration } from "./notify";
 
-const revalidateAll = () => revalidatePath("/[locale]", "layout");
+const revalidateAll = revalidatePublic;
 
 export type FormState = { status: "idle" } | { status: "ok"; id?: string } | { status: "error"; error: string; fields?: string[] };
 

@@ -14,7 +14,7 @@ describe("Vercel ↔ Supabase oʻzgaruvchilari", () => {
     const db = new URL(env.DATABASE_URL!);
     expect(db.port).toBe("6543");
     expect(db.searchParams.get("pgbouncer")).toBe("true");
-    expect(db.searchParams.get("connection_limit")).toBe("1");
+    expect(db.searchParams.get("connection_limit")).toBe("5");
     // db.<ref>.supabase.co (faqat IPv6) emas, pooler'ning 5432 porti
     const direct = new URL(env.DIRECT_URL!);
     expect(direct.hostname).toBe("aws-0-eu-central-1.pooler.supabase.com");

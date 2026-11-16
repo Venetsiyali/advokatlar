@@ -33,6 +33,37 @@ body {
   background: #ffffff;
   color: var(--color-navy-900);
   -webkit-font-smoothing: antialiased;
+  /* Telefonda: bosilganda kulrang “chaqnash” oʻrniga oʻz active holatlarimiz */
+  -webkit-tap-highlight-color: transparent;
+  /* Matn hajmi telefonni burganda oʻz-oʻzidan kattalashmasin */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Tugma va havolalarda ikki marta bosib kattalashtirish kechikishi yoʻq */
+a,
+button,
+input,
+select,
+textarea,
+label,
+summary {
+  touch-action: manipulation;
+}
+
+/* Sticky header ostida anchor'ga oʻtish */
+html {
+  scroll-padding-top: 5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 .prose-content h2 {

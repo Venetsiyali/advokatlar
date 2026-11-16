@@ -2,15 +2,13 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { LogoMark } from "./logo";
 import { site } from "@/lib/site";
-import { prisma } from "@/lib/db";
+import { getPublishedTopics } from "@/server/lawyers";
 import { ltitle } from "@/lib/localized";
 import { Mail, Phone, Send } from "lucide-react";
 
 export async function Footer() {
   const [t, tn, locale] = await Promise.all([getTranslations("footer"), getTranslations("nav"), getLocale()]);
-  const topics = await prisma.topicPage
-    .findMany({ where: { published: true }, orderBy: { sortOrder: "asc" }, take: 6 })
-    .catch(() => []);
+  const topics = (await getPublishedTopics().catch(() => [])).slice(0, 6);
 
   const platform = [
     { href: "/advokatlar", label: tn("lawyers") },
@@ -81,7 +79,7 @@ export async function Footer() {
         </FooterCol>
       </div>
       <div className="border-t border-white/10">
-        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-6 text-xs text-navy-200 md:flex-row md:items-start md:justify-between">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 pt-6 pb-28 text-xs text-navy-200 md:flex-row md:items-start md:justify-between lg:pb-6">
           <div className="space-y-1.5">
             <p>{t("rights", { year: new Date().getFullYear(), brand: site.brand })}</p>
             <p>{t("operator", { operator: site.operator })}</p>

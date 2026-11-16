@@ -2,10 +2,9 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Info } from "lucide-react";
 import { Link } from "@/i18n/navigation";
-import { prisma } from "@/lib/db";
 import { lname } from "@/lib/localized";
 import { alternates, jsonLd, localeUrl } from "@/lib/seo";
-import { getTopLawyers } from "@/server/lawyers";
+import { getRegions, getTopLawyers } from "@/server/lawyers";
 import { LawyerCard } from "@/components/lawyers/lawyer-card";
 import { PageHeader } from "@/components/site/page-header";
 import { RegionChips } from "@/components/site/region-chips";
@@ -34,7 +33,7 @@ export default async function RatingPage({ params, searchParams }: Props) {
   const sp = await searchParams;
   const monthly = sp.davr === "oy";
 
-  const regions = await prisma.region.findMany({ orderBy: { sortOrder: "asc" } });
+  const regions = await getRegions();
   const region = regions.find((r) => r.slug === sp.viloyat);
   const monthStart = new Date();
   monthStart.setDate(1);

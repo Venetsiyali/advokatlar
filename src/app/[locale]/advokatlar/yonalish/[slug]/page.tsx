@@ -3,10 +3,9 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { CatalogPageShell } from "@/components/lawyers/catalog-page";
 import { Link } from "@/i18n/navigation";
-import { prisma } from "@/lib/db";
 import { lname } from "@/lib/localized";
 import { alternates } from "@/lib/seo";
-import { parseFilters } from "@/server/lawyers";
+import { getSpecializations, parseFilters } from "@/server/lawyers";
 
 /** Har soʻrovda (sessiya yoki URL parametrlari) — build vaqtida generatsiya qilinmaydi */
 export const dynamic = "force-dynamic";
@@ -16,7 +15,7 @@ type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-const getSpec = (slug: string) => prisma.specialization.findUnique({ where: { slug } });
+const getSpec = async (slug: string) => (await getSpecializations()).find((s) => s.slug === slug) ?? null;
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
@@ -41,7 +40,7 @@ export default async function SpecPage({ params, searchParams }: Props) {
   const sp = await searchParams;
   const [t, specs] = await Promise.all([
     getTranslations("catalog"),
-    prisma.specialization.findMany({ orderBy: { sortOrder: "asc" } }),
+    getSpecializations(),
   ]);
   const name = lname(spec, locale);
 

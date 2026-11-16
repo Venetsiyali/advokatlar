@@ -1,6 +1,7 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { cached } from "./cache";
 
 export const lawyerCardInclude = {
   region: true,
@@ -44,7 +45,10 @@ export function parseFilters(sp: Record<string, string | string[] | undefined>):
   };
 }
 
-export async function searchLawyers(f: CatalogFilters) {
+/** Katalog qidiruvi — 60 soniya keshlanadi (filtrlar kalitning bir qismi) */
+export const searchLawyers = cached("searchLawyers", searchLawyersUncached, 60);
+
+async function searchLawyersUncached(f: CatalogFilters) {
   const where: Prisma.LawyerProfileWhereInput = {
     status: "TASDIQLANGAN",
     user: { isBlocked: false },
@@ -97,7 +101,13 @@ export async function getLawyerBySlug(slug: string) {
  * Oyning TOP advokatlari: shu oy olingan baholar (koʻp boʻlsa — ustun) va umumiy reyting asosida.
  * Bayes-oʻrtacha: kam izohli advokat tasodifan yuqoriga chiqib ketmasligi uchun.
  */
-export async function getTopLawyers({ limit = 5, from, regionId }: { limit?: number; from?: Date; regionId?: string } = {}) {
+export const getTopLawyers = cached(
+  "getTopLawyers",
+  (opts: { limit?: number; from?: Date; regionId?: string } = {}) => getTopLawyersUncached(opts),
+  300,
+);
+
+async function getTopLawyersUncached({ limit = 5, from, regionId }: { limit?: number; from?: Date; regionId?: string } = {}) {
   const lawyers = await prisma.lawyerProfile.findMany({
     where: { status: "TASDIQLANGAN", user: { isBlocked: false }, reviewCount: { gt: 0 }, ...(regionId && { regionId }) },
     include: {
@@ -122,7 +132,9 @@ export async function getTopLawyers({ limit = 5, from, regionId }: { limit?: num
     .slice(0, limit);
 }
 
-export async function getHomeStats() {
+export const getHomeStats = cached("getHomeStats", getHomeStatsUncached, 300);
+
+async function getHomeStatsUncached() {
   const [lawyers, requests, regions] = await Promise.all([
     prisma.lawyerProfile.count({ where: { status: "TASDIQLANGAN" } }),
     prisma.request.count({ where: { status: { in: ["QABUL_QILINDI", "JARAYONDA", "YOPILDI"] } } }),
@@ -131,12 +143,61 @@ export async function getHomeStats() {
   return { lawyers, requests, regions };
 }
 
-export const getRegions = () =>
-  prisma.region.findMany({ orderBy: { sortOrder: "asc" }, include: { districts: { orderBy: { nameUz: "asc" } } } });
+// Maʼlumotnomalar deyarli oʻzgarmaydi — 1 soat keshlanadi
+export const getRegions = cached(
+  "getRegions",
+  () => prisma.region.findMany({ orderBy: { sortOrder: "asc" }, include: { districts: { orderBy: { nameUz: "asc" } } } }),
+  3600,
+);
 
-export const getSpecializations = () => prisma.specialization.findMany({ orderBy: { sortOrder: "asc" } });
+export const getSpecializations = cached("getSpecializations", () => prisma.specialization.findMany({ orderBy: { sortOrder: "asc" } }), 3600);
+
+const getSettingRow = cached("getSetting", (key: string) => prisma.setting.findUnique({ where: { key } }), 300);
 
 export async function getSetting<T>(key: string, fallback: T): Promise<T> {
-  const row = await prisma.setting.findUnique({ where: { key } }).catch(() => null);
+  const row = await getSettingRow(key).catch(() => null);
   return (row?.value as T) ?? fallback;
 }
+
+/** Footer va mavzular roʻyxati — har bir sahifada koʻrsatiladi, shuning uchun keshlanadi */
+export const getPublishedTopics = cached(
+  "getPublishedTopics",
+  () => prisma.topicPage.findMany({ where: { published: true }, orderBy: [{ sortOrder: "asc" }, { title: "asc" }] }),
+  3600,
+);
+
+/** Navbatchi advokatlar: faqat murojaat qabul qila oladiganlar (tasdiqlangan + obunasi faol) — 60 s kesh */
+export const getDutyLawyers = cached(
+  "getDutyLawyers",
+  (regionId: string | null) => {
+    const now = new Date();
+    return prisma.lawyerProfile.findMany({
+      where: {
+        isOnDuty: true,
+        status: "TASDIQLANGAN",
+        user: { isBlocked: false },
+        subscription: { status: { in: ["SINOV", "FAOL"] }, endsAt: { gt: now } },
+        ...(regionId && { regionId }),
+      },
+      include: lawyerCardInclude,
+      orderBy: [{ avgResponseMins: { sort: "asc", nulls: "last" } }, { rating: "desc" }],
+      take: 30,
+    });
+  },
+  60,
+);
+
+/** Maqolalar roʻyxati: rus sahifada — ruscha, oʻzbek (lotin/kirill) sahifada — oʻzbekcha; boʻlmasa hammasi */
+export const getArticlesPage = cached(
+  "getArticlesPage",
+  async (locale: string, page: number, pageSize: number) => {
+    let where: Prisma.ArticleWhereInput = { published: true, locale: { in: locale === "ru" ? ["ru"] : ["uz", "uz_Cyrl"] } };
+    if ((await prisma.article.count({ where })) === 0) where = { published: true };
+    const [rows, total] = await Promise.all([
+      prisma.article.findMany({ where, orderBy: { publishedAt: "desc" }, skip: (page - 1) * pageSize, take: pageSize }),
+      prisma.article.count({ where }),
+    ]);
+    return { rows, total };
+  },
+  300,
+);

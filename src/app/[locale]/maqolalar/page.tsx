@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import type { Locale, Prisma } from "@prisma/client";
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
 import { ArrowRight, Clock } from "lucide-react";
 import { Link } from "@/i18n/navigation";
-import { prisma } from "@/lib/db";
+import { getArticlesPage } from "@/server/lawyers";
 import { articleText } from "@/lib/localized";
 import { readingMinutes } from "@/lib/sanitize";
 import { alternates } from "@/lib/seo";
@@ -15,11 +14,6 @@ export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 12;
 
-/** Joriy til uchun maqolalar: rus sahifada — ruscha, oʻzbek (lotin/kirill) sahifada — oʻzbekcha */
-function articleLocaleWhere(locale: string): Prisma.ArticleWhereInput {
-  const langs: Locale[] = locale === "ru" ? ["ru"] : ["uz", "uz_Cyrl"];
-  return { published: true, locale: { in: langs } };
-}
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
@@ -32,16 +26,7 @@ export default async function ArticlesPage({ params, searchParams }: { params: P
   setRequestLocale(locale);
   const page = Math.max(1, Number((await searchParams).page) || 1);
 
-  let where = articleLocaleWhere(locale);
-  // Tanlangan tilda maqola boʻlmasa — barcha eʼlon qilinganlar
-  if ((await prisma.article.count({ where })) === 0) where = { published: true };
-
-  const [t, format, rows, total] = await Promise.all([
-    getTranslations("articles"),
-    getFormatter(),
-    prisma.article.findMany({ where, orderBy: { publishedAt: "desc" }, skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE }),
-    prisma.article.count({ where }),
-  ]);
+  const [t, format, { rows, total }] = await Promise.all([getTranslations("articles"), getFormatter(), getArticlesPage(locale, page, PAGE_SIZE)]);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">

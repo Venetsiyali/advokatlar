@@ -8,6 +8,7 @@ import { getRegions, getSpecializations } from "@/server/lawyers";
 import { getCurrentUser } from "@/server/session";
 import { formatPhone } from "@/lib/phone";
 import { RequestForm } from "./request-form";
+import { ClientMessages } from "@/components/client-messages";
 
 /** Har soʻrovda (sessiya yoki URL parametrlari) — build vaqtida generatsiya qilinmaydi */
 export const dynamic = "force-dynamic";
@@ -54,23 +55,25 @@ export default async function RequestPage({ params, searchParams }: Props) {
         <p className="mt-4 rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-700">{t("targetLawyer", { name: target.fullName })}</p>
       )}
       <Card className="mt-6 p-5 sm:p-8">
-        <RequestForm
-          regions={regions.map((r) => ({
-            id: r.id,
-            name: lname(r, locale),
-            districts: r.districts.map((d) => ({ id: d.id, name: lname(d, locale) })),
-          }))}
-          specs={specs.map((s) => ({ id: s.id, name: lname(s, locale) }))}
-          defaults={{
-            regionId,
-            specializationId: specId,
-            name: user?.name ?? "",
-            phone: user?.phone ? formatPhone(user.phone) : "",
-            targetLawyer: target?.slug ?? "",
-          }}
-          phoneVerified={Boolean(user?.phone)}
-          loggedIn={Boolean(user)}
-        />
+        <ClientMessages ns={["auth", "request"]}>
+          <RequestForm
+            regions={regions.map((r) => ({
+              id: r.id,
+              name: lname(r, locale),
+              districts: r.districts.map((d) => ({ id: d.id, name: lname(d, locale) })),
+            }))}
+            specs={specs.map((s) => ({ id: s.id, name: lname(s, locale) }))}
+            defaults={{
+              regionId,
+              specializationId: specId,
+              name: user?.name ?? "",
+              phone: user?.phone ? formatPhone(user.phone) : "",
+              targetLawyer: target?.slug ?? "",
+            }}
+            phoneVerified={Boolean(user?.phone)}
+            loggedIn={Boolean(user)}
+          />
+        </ClientMessages>
       </Card>
     </div>
   );

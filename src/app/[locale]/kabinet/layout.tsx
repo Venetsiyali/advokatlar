@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/server/session";
 import { logoutAction } from "@/server/cabinet-actions";
 import { CabinetNav } from "./cabinet-nav";
 import { LogOut } from "lucide-react";
+import { ClientMessages } from "@/components/client-messages";
 
 /** Har soʻrovda (sessiya yoki URL parametrlari) — build vaqtida generatsiya qilinmaydi */
 export const dynamic = "force-dynamic";
@@ -40,19 +41,21 @@ export default async function CabinetLayout({
   if (user.role === "ADMIN") items.push({ href: "/admin", label: t("admin") });
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-extrabold">{t("hello", { name: user.lawyerProfile?.fullName || user.name || user.phone || "" })}</h1>
-        <form action={logoutAction}>
-          <button className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 hover:bg-navy-50">
-            <LogOut className="size-4" /> {ta("logout")}
-          </button>
-        </form>
+    <ClientMessages ns={["cabinet", "lang", "profileForm", "request", "documentsPage", "subscriptionPage", "auth"]}>
+      <div className="mx-auto max-w-6xl px-4 py-8">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-2xl font-extrabold">{t("hello", { name: user.lawyerProfile?.fullName || user.name || user.phone || "" })}</h1>
+          <form action={logoutAction}>
+            <button className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 hover:bg-navy-50">
+              <LogOut className="size-4" /> {ta("logout")}
+            </button>
+          </form>
+        </div>
+        <div className="mt-6 grid gap-6 lg:grid-cols-[220px_1fr]">
+          <CabinetNav items={items} />
+          <div className="min-w-0">{children}</div>
+        </div>
       </div>
-      <div className="mt-6 grid gap-6 lg:grid-cols-[220px_1fr]">
-        <CabinetNav items={items} />
-        <div className="min-w-0">{children}</div>
-      </div>
-    </div>
+    </ClientMessages>
   );
 }

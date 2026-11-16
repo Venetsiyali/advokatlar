@@ -45,8 +45,9 @@ export function applySupabaseEnv(env: Env): { database?: string; direct?: string
   if (!env.DATABASE_URL) {
     const pooled = envBySuffix(env, "POSTGRES_PRISMA_URL") ?? envBySuffix(env, "POSTGRES_URL");
     if (pooled) {
-      // Serverless: har funksiya nusxasi bitta ulanish; pgbouncer — prepared statement'larsiz
-      env.DATABASE_URL = withParams(pooled, { pgbouncer: "true", connection_limit: "1" });
+      // pgbouncer — prepared statement'larsiz. 5 ta ulanish: sahifadagi parallel soʻrovlar navbatga turmaydi
+      // (Supavisor pooler ulanishlarni oʻzi taqsimlaydi; Vercel Fluid nusxalari kam)
+      env.DATABASE_URL = withParams(pooled, { pgbouncer: "true", connection_limit: "5" });
       used.database = "POSTGRES_PRISMA_URL";
     }
   }

@@ -111,15 +111,15 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       </section>
 
       {/* ISHONCH BELGILARI */}
-      <section className="mx-auto max-w-6xl px-4 py-14">
+      <section className="mx-auto max-w-6xl px-4 py-8 sm:py-14">
         <h2 className="sr-only">{t("trust.title")}</h2>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 md:grid-cols-3">
           {[
             { I: BadgeCheck, title: t("trust.licenseTitle"), text: t("trust.licenseText") },
             { I: Gift, title: t("trust.freeTitle"), text: t("trust.freeText") },
             { I: Lock, title: t("trust.privacyTitle"), text: t("trust.privacyText") },
           ].map(({ I, title, text }) => (
-            <div key={title} className="flex gap-4 rounded-2xl bg-navy-50/60 p-5">
+            <div key={title} className="flex gap-4 rounded-2xl bg-navy-50/60 p-4 sm:p-5">
               <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white text-brand-600 shadow-soft">
                 <I className="size-5" />
               </div>
@@ -133,7 +133,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       </section>
 
       {/* TOP-5 */}
-      <section className="mx-auto max-w-6xl px-4 py-10">
+      <section className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
         <SectionHead title={t("top.title")} subtitle={t("top.subtitle")}>
           <Link href="/reyting" className="inline-flex items-center gap-1 text-sm font-semibold text-brand-700 hover:underline">
             {t("top.seeAll")} <ArrowRight className="size-4" />
@@ -142,16 +142,17 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         {top.length === 0 ? (
           <p className="text-slate-500">{t("top.empty")}</p>
         ) : (
-          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 [&>*:nth-child(n+4)]:hidden sm:[&>*:nth-child(n+4)]:block">
+          // Telefonda — yonga suriladigan karusel (snap), katta ekranda — panjara
+          <div className="-mx-4 mt-6 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-px-4 px-4 pb-2 pt-3 [scrollbar-width:none] sm:mx-0 sm:mt-8 sm:grid sm:snap-none sm:grid-cols-2 sm:gap-5 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-3 xl:grid-cols-5 [&::-webkit-scrollbar]:hidden">
             {top.map((x, i) => (
-              <LawyerCard key={x.lawyer.id} lawyer={x.lawyer} place={i + 1} />
+              <LawyerCard key={x.lawyer.id} lawyer={x.lawyer} place={i + 1} className="w-[85%] shrink-0 snap-start sm:w-auto" />
             ))}
           </div>
         )}
       </section>
 
       {/* XIZMATLAR */}
-      <section id="xizmatlar" className="scroll-mt-20 bg-navy-50/50 py-16">
+      <section id="xizmatlar" className="scroll-mt-20 bg-navy-50/50 py-10 sm:py-16">
         <div className="mx-auto max-w-6xl px-4">
           <SectionHead title={t("services.title")} subtitle={t("services.subtitle")} />
           <div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -180,7 +181,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       </section>
 
       {/* QANDAY ISHLAYDI */}
-      <section className="mx-auto max-w-6xl px-4 py-16">
+      <section className="mx-auto max-w-6xl px-4 py-10 sm:py-16">
         <SectionHead title={t("how.title")} />
         <ol className="mt-10 grid gap-6 md:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
@@ -229,7 +230,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       </section>
 
       {/* FAQ */}
-      <section id="faq" className="mx-auto max-w-3xl scroll-mt-20 px-4 py-16">
+      <section id="faq" className="mx-auto max-w-3xl scroll-mt-20 px-4 py-10 sm:py-16">
         <SectionHead title={t("faq.title")} center />
         <div className="mt-8">
           <Accordion items={faq} />

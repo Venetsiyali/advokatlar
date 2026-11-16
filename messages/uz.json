@@ -51,7 +51,9 @@
     "more": "Batafsil",
     "notFound": "Sahifa topilmadi",
     "notFoundText": "Siz qidirgan sahifa mavjud emas yoki koʻchirilgan.",
-    "backHome": "Bosh sahifaga qaytish"
+    "backHome": "Bosh sahifaga qaytish",
+    "ctaRequest": "Bepul murojaat qoldirish",
+    "loading": "Yuklanmoqda…"
   },
   "lang": {
     "uz": "Oʻzbek",

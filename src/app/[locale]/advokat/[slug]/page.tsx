@@ -209,7 +209,7 @@ export default async function LawyerPage({ params }: Props) {
       </div>
 
       {/* Mobil: pastki yopishqoq tugma */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-navy-100 bg-white/95 p-3 backdrop-blur lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-navy-100 bg-white/95 px-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur lg:hidden">
         <Link href={contactHref} className={buttonVariants({ size: "lg", className: "w-full" })}>
           {t("contactCta")}
         </Link>

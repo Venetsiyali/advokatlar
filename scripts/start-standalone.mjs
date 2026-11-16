@@ -16,6 +16,8 @@ for (const [from, to] of [
   rmSync(to, { recursive: true, force: true });
   cpSync(from, to, { recursive: true });
 }
+// E2E: har ishga tushirishda maʼlumotlar keshi boʻsh boʻlsin (birinchi tashrif xatolarini ham ushlash uchun)
+if (process.env.COLD_CACHE === "1") rmSync(`${dir}/.next/cache`, { recursive: true, force: true });
 // Standalone server .env ni oʻqimaydi — mavjud boʻlsa yuklaymiz (muhit oʻzgaruvchilari ustun)
 if (existsSync(".env")) process.loadEnvFile(".env");
 

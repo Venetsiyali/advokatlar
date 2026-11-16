@@ -2,10 +2,9 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Siren, Zap } from "lucide-react";
 import { Link } from "@/i18n/navigation";
-import { prisma } from "@/lib/db";
 import { lname } from "@/lib/localized";
 import { alternates } from "@/lib/seo";
-import { lawyerCardInclude } from "@/server/lawyers";
+import { getDutyLawyers, getRegions } from "@/server/lawyers";
 import { buttonVariants } from "@/components/ui/button";
 import { LawyerCard } from "@/components/lawyers/lawyer-card";
 import { PageHeader } from "@/components/site/page-header";
@@ -31,26 +30,9 @@ export default async function DutyPage({ params, searchParams }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
   const sp = await searchParams;
-  const regions = await prisma.region.findMany({ orderBy: { sortOrder: "asc" } });
+  const regions = await getRegions();
   const region = regions.find((r) => r.slug === sp.viloyat);
-  const now = new Date();
-
-  const [t, lawyers] = await Promise.all([
-    getTranslations("duty"),
-    // Faqat haqiqatan murojaat qabul qila oladiganlar: tasdiqlangan + obunasi faol
-    prisma.lawyerProfile.findMany({
-      where: {
-        isOnDuty: true,
-        status: "TASDIQLANGAN",
-        user: { isBlocked: false },
-        subscription: { status: { in: ["SINOV", "FAOL"] }, endsAt: { gt: now } },
-        ...(region && { regionId: region.id }),
-      },
-      include: lawyerCardInclude,
-      orderBy: [{ avgResponseMins: { sort: "asc", nulls: "last" } }, { rating: "desc" }],
-      take: 30,
-    }),
-  ]);
+  const [t, lawyers] = await Promise.all([getTranslations("duty"), getDutyLawyers(region?.id ?? null)]);
   const requestHref = { pathname: "/murojaat", query: region ? { viloyat: region.slug } : {} };
 
   return (

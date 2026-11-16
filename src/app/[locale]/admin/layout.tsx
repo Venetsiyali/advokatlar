@@ -4,6 +4,7 @@ import { ShieldCheck } from "lucide-react";
 import { getPathname } from "@/i18n/navigation";
 import { getCurrentUser } from "@/server/session";
 import { CabinetNav } from "../kabinet/cabinet-nav";
+import { ClientMessages } from "@/components/client-messages";
 
 /** Har soʻrovda (sessiya yoki URL parametrlari) — build vaqtida generatsiya qilinmaydi */
 export const dynamic = "force-dynamic";
@@ -37,14 +38,16 @@ export default async function AdminLayout({ children, params }: { children: Reac
   ];
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
-      <h1 className="flex items-center gap-2 text-2xl font-extrabold">
-        <ShieldCheck className="size-6 text-brand-600" /> {t("title")}
-      </h1>
-      <div className="mt-6 grid gap-6 lg:grid-cols-[230px_1fr]">
-        <CabinetNav items={items} root="/admin" />
-        <div className="min-w-0">{children}</div>
+    <ClientMessages ns={["admin", "lang"]}>
+      <div className="mx-auto max-w-7xl px-4 py-8">
+        <h1 className="flex items-center gap-2 text-2xl font-extrabold">
+          <ShieldCheck className="size-6 text-brand-600" /> {t("title")}
+        </h1>
+        <div className="mt-6 grid gap-6 lg:grid-cols-[230px_1fr]">
+          <CabinetNav items={items} root="/admin" />
+          <div className="min-w-0">{children}</div>
+        </div>
       </div>
-    </div>
+    </ClientMessages>
   );
 }

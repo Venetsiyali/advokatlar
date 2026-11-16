@@ -2,6 +2,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Card } from "@/components/ui/card";
 import { prisma } from "@/lib/db";
 import { ReviewForm } from "./review-form";
+import { ClientMessages } from "@/components/client-messages";
 
 /** Har soʻrovda (sessiya yoki URL parametrlari) — build vaqtida generatsiya qilinmaydi */
 export const dynamic = "force-dynamic";
@@ -33,7 +34,9 @@ export default async function ReviewPage({ params }: { params: Promise<{ locale:
           <>
             <p className="mt-2 text-slate-600">{t("subtitle", { code: req.code, name: req.assignedLawyer!.fullName })}</p>
             <div className="mt-6">
-              <ReviewForm token={token} />
+              <ClientMessages ns={["review"]}>
+                <ReviewForm token={token} />
+              </ClientMessages>
             </div>
           </>
         )}

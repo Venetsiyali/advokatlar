@@ -8,6 +8,7 @@ import { prisma } from "@/lib/db";
 import { ALLOWED_DOC_TYPES, ALLOWED_IMAGE_TYPES, deleteFile, publicUrl, storeFile } from "@/lib/storage";
 import { acceptAssignment, clientCancel, lawyerSetStatus, rejectAssignment } from "./matching";
 import { getCurrentUser } from "./session";
+import { revalidatePublic } from "./cache";
 
 async function requireLawyer() {
   const user = await getCurrentUser();
@@ -49,7 +50,7 @@ export async function toggleDutyAction(): Promise<ActionResult> {
   const { lawyer } = await requireLawyer();
   await prisma.lawyerProfile.update({ where: { id: lawyer.id }, data: { isOnDuty: !lawyer.isOnDuty } });
   // Ochiq sahifalardagi (ISR) advokat kartalari ham yangilansin
-  revalidatePath("/[locale]", "layout");
+  revalidatePublic();
   return { ok: true };
 }
 
@@ -138,7 +139,7 @@ export async function saveProfileAction(_prev: ProfileState, fd: FormData): Prom
     }),
     prisma.user.update({ where: { id: user.id }, data: { name: d.fullName } }),
   ]);
-  revalidatePath("/[locale]", "layout");
+  revalidatePublic();
   return { status: "ok" };
 }
 

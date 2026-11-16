@@ -5,6 +5,7 @@ import { getPathname } from "@/i18n/navigation";
 import { Card } from "@/components/ui/card";
 import { LoginForm } from "./login-form";
 import { getCurrentUser } from "@/server/session";
+import { ClientMessages } from "@/components/client-messages";
 
 /** Har soʻrovda (sessiya yoki URL parametrlari) — build vaqtida generatsiya qilinmaydi */
 export const dynamic = "force-dynamic";
@@ -46,7 +47,9 @@ export default async function LoginPage({ params, searchParams }: Props) {
         <h1 className="text-2xl font-extrabold">{isLawyer ? t("lawyerTitle") : t("title")}</h1>
         <p className="mt-2 text-sm text-slate-600">{isLawyer ? t("lawyerSubtitle") : t("subtitle")}</p>
         <div className="mt-6">
-          <LoginForm role={isLawyer ? "advokat" : "mijoz"} redirectTo={target} telegramBot={telegramBot} />
+          <ClientMessages ns={["auth"]}>
+            <LoginForm role={isLawyer ? "advokat" : "mijoz"} redirectTo={target} telegramBot={telegramBot} />
+          </ClientMessages>
         </div>
       </Card>
     </div>

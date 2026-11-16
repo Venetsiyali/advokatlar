@@ -3,10 +3,9 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { CatalogPageShell } from "@/components/lawyers/catalog-page";
 import { Link } from "@/i18n/navigation";
-import { prisma } from "@/lib/db";
 import { lname } from "@/lib/localized";
 import { alternates } from "@/lib/seo";
-import { parseFilters } from "@/server/lawyers";
+import { getRegions, parseFilters } from "@/server/lawyers";
 
 /** Har soʻrovda (sessiya yoki URL parametrlari) — build vaqtida generatsiya qilinmaydi */
 export const dynamic = "force-dynamic";
@@ -16,7 +15,7 @@ type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-const getRegion = (slug: string) => prisma.region.findUnique({ where: { slug } });
+const getRegion = async (slug: string) => (await getRegions()).find((r) => r.slug === slug) ?? null;
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const { locale, viloyat } = await params;
@@ -41,7 +40,7 @@ export default async function RegionPage({ params, searchParams }: Props) {
   const sp = await searchParams;
   const [t, regions] = await Promise.all([
     getTranslations("catalog"),
-    prisma.region.findMany({ orderBy: { sortOrder: "asc" } }),
+    getRegions(),
   ]);
   const name = lname(region, locale);
 
