@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Link } from "@/i18n/navigation";
-import { LocaleSwitcher } from "./locale-switcher";
 import { AccountLink } from "./account-link";
 
 export function MobileMenu({
@@ -43,12 +42,11 @@ export function MobileMenu({
               </Link>
             ))}
           </nav>
-          <div className="mt-3 flex items-center justify-between gap-3 border-t border-navy-100 pt-4">
-            <LocaleSwitcher />
+          <div className="mt-3 border-t border-navy-100 pt-4">
             <AccountLink
               {...account}
               onClick={() => setOpen(false)}
-              className="rounded-xl bg-navy-800 px-5 py-2.5 text-sm font-semibold text-white"
+              className="flex h-12 items-center justify-center rounded-xl bg-navy-800 px-5 text-base font-semibold text-white"
             />
           </div>
         </div>

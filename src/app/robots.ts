@@ -3,7 +3,8 @@ import { routing } from "@/i18n/routing";
 import { site } from "@/lib/site";
 
 // Shaxsiy va xizmat sahifalari indekslanmaydi. Staging/test serverda ROBOTS_NOINDEX=1 — butun sayt yopiladi.
-const PRIVATE = ["/admin", "/kabinet", "/kirish", "/baho", "/api/"];
+// /qidiruv — filtrli katalogning ichki marshruti (ochiq manzil: /advokatlar?…)
+const PRIVATE = ["/admin", "/kabinet", "/kirish", "/baho", "/qidiruv", "/api/"];
 
 export default function robots(): MetadataRoute.Robots {
   // Vercel preview deploy'lari ham indekslanmaydi

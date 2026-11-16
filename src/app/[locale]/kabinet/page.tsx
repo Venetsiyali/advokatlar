@@ -117,7 +117,7 @@ async function LawyerOverview({ user }: { user: CurrentUser }) {
         {user.telegramId ? (
           <p className="mt-1 text-sm text-brand-700">{t("telegramLinked")}</p>
         ) : (
-          <TelegramLink bot={process.env.NEXT_PUBLIC_TELEGRAM_BOT || "advokatkerak_bot"} />
+          <TelegramLink bot={process.env.NEXT_PUBLIC_TELEGRAM_BOT || "advokatbor_bot"} />
         )}
       </Card>
     </div>

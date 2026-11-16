@@ -1,4 +1,4 @@
-# AdvokatKerak — production stek. Ishga tushirish (README ga qarang):
+# AdvokatBor — production stek. Ishga tushirish (README ga qarang):
 #   cp .env.example .env   # qiymatlarni toʻldiring
 #   docker compose up -d --build
 #   docker compose --profile proxy up -d   # Caddy bilan avtomatik HTTPS (ixtiyoriy)
@@ -15,7 +15,7 @@ x-app-env: &app-env
 
 x-build-args: &build-args
   NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:?NEXT_PUBLIC_SITE_URL .env da berilishi shart}
-  NEXT_PUBLIC_BRAND_NAME: ${NEXT_PUBLIC_BRAND_NAME:-AdvokatKerak}
+  NEXT_PUBLIC_BRAND_NAME: ${NEXT_PUBLIC_BRAND_NAME:-AdvokatBor}
   NEXT_PUBLIC_CONTACT_PHONE: ${NEXT_PUBLIC_CONTACT_PHONE:-}
   NEXT_PUBLIC_CONTACT_EMAIL: ${NEXT_PUBLIC_CONTACT_EMAIL:-}
   NEXT_PUBLIC_TELEGRAM_BOT: ${NEXT_PUBLIC_TELEGRAM_BOT:-}
@@ -48,7 +48,7 @@ services:
   # Bir martalik: migratsiyalar (+ SEED=1 boʻlsa — boshlangʻich maʼlumotlar)
   migrate:
     build: { context: ., target: tools }
-    image: advokatkerak-tools
+    image: advokatbor-tools
     <<: *app-env
     command: ["sh", "-c", "npx prisma migrate deploy && if [ \"$${SEED:-0}\" = \"1\" ]; then npx prisma db seed; fi"]
     depends_on:
@@ -60,7 +60,7 @@ services:
       context: .
       target: runner
       args: *build-args
-    image: advokatkerak-web
+    image: advokatbor-web
     restart: unless-stopped
     <<: *app-env
     volumes:
@@ -72,7 +72,7 @@ services:
       migrate: { condition: service_completed_successfully }
 
   bot:
-    image: advokatkerak-tools
+    image: advokatbor-tools
     restart: unless-stopped
     <<: *app-env
     command: ["npm", "run", "bot"]

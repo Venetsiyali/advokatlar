@@ -1,4 +1,4 @@
-# AdvokatKerak — advokat topish platformasi
+# AdvokatBor — advokat topish platformasi
 
 Oʻzbekiston boʻylab mijozlarni litsenziyasi tekshirilgan advokatlar bilan bogʻlaydigan veb-platforma va Telegram bot.
 
@@ -177,7 +177,7 @@ Serverda Docker va Docker Compose v2 boʻlishi kerak. **Server Oʻzbekiston hudu
    ```
 
    Majburiy maydonlar:
-   - `NEXT_PUBLIC_SITE_URL` (`https://advokatkerak.uz`)
+   - `NEXT_PUBLIC_SITE_URL` (`https://advokatbor.uz`)
    - `AUTH_SECRET`
    - `POSTGRES_PASSWORD` (`openssl rand -hex 24`)
    - `ADMIN_PHONE`
@@ -203,7 +203,7 @@ Serverda Docker va Docker Compose v2 boʻlishi kerak. **Server Oʻzbekiston hudu
 
    Migratsiyalar avtomatik qoʻllanadi.
 
-3. HTTPS. Variant A: oʻrnatilgan Caddy (Let's Encrypt). `.env` da `DOMAIN=advokatkerak.uz` boʻlishi kerak.
+3. HTTPS. Variant A: oʻrnatilgan Caddy (Let's Encrypt). `.env` da `DOMAIN=advokatbor.uz` boʻlishi kerak.
 
    ```bash
    docker compose --profile proxy up -d
@@ -246,7 +246,7 @@ Serverda Docker va Docker Compose v2 boʻlishi kerak. **Server Oʻzbekiston hudu
 # Baza (har kuni, masalan cron orqali)
 docker compose exec -T postgres pg_dump -U advokat -Fc advokat > backup-$(date +%F).dump
 # Yuklangan hujjatlar (hajm nomi = <loyiha papkasi>_storage, qarang: docker volume ls)
-docker run --rm -v advokatkerak_storage:/data -v "$PWD":/backup alpine tar czf /backup/storage-$(date +%F).tgz -C /data .
+docker run --rm -v advokatbor_storage:/data -v "$PWD":/backup alpine tar czf /backup/storage-$(date +%F).tgz -C /data .
 # Tiklash
 docker compose exec -T postgres pg_restore -U advokat -d advokat --clean < backup-YYYY-MM-DD.dump
 ```

@@ -12,11 +12,25 @@ test.describe("Ochiq sahifalar", () => {
 
   test("til almashtirish: rus va kirill", async ({ page }) => {
     await page.goto("/narxlar");
-    await page.getByRole("combobox").first().selectOption("ru");
+    const switcher = page.getByRole("navigation", { name: "Til" });
+    // Uchala til ham sarlavhada doim koʻrinadi
+    for (const name of ["Oʻzbekcha", "Ўзбекча", "Русский"]) await expect(switcher.getByRole("link", { name })).toBeVisible();
+    await switcher.getByRole("link", { name: "Русский" }).click();
     await expect(page).toHaveURL(/\/ru\/narxlar$/);
     await expect(page.locator("h1")).toHaveText("Цены");
-    await page.goto("/uz-Cyrl/narxlar");
+    await page.getByRole("link", { name: "Ўзбекча" }).click();
+    await expect(page).toHaveURL(/\/uz-Cyrl\/narxlar$/);
     await expect(page.locator("h1")).toHaveText("Нархлар");
+    await page.getByRole("link", { name: "Oʻzbekcha" }).click();
+    await expect(page).toHaveURL(/\/narxlar$/);
+    await expect(page.locator("h1")).toHaveText("Narxlar");
+  });
+
+  test("til almashganda katalog filtri saqlanadi", async ({ page }) => {
+    await page.goto("/advokatlar/toshkent-shahri?tajriba=10");
+    await page.getByRole("link", { name: "Русский" }).click();
+    await expect(page).toHaveURL(/\/ru\/advokatlar\/toshkent-shahri\?tajriba=10$/);
+    await expect(page.locator("h1")).toContainText("Ташкент");
   });
 
   test("katalog → hudud → advokat profili", async ({ page }) => {
@@ -77,6 +91,8 @@ test.describe("Ochiq sahifalar", () => {
 
 test("mobil menyu @mobile", async ({ page }) => {
   await page.goto("/");
+  // Til tugmalari telefonda ham sarlavhada (menyu ichida emas)
+  for (const name of ["Oʻzbekcha", "Ўзбекча", "Русский"]) await expect(page.getByRole("link", { name })).toBeInViewport();
   const toggle = page.getByRole("button", { name: "Menyu" });
   await expect(toggle).toBeVisible();
   await toggle.click();
@@ -102,4 +118,42 @@ test("mobil: pastki “murojaat” paneli @mobile", async ({ page }) => {
   await expect(page).toHaveURL(/\/murojaat$/);
   // Murojaat sahifasining oʻzida panel yoʻq
   await expect(page.getByRole("link", { name: "Bepul murojaat qoldirish" })).toHaveCount(0);
+});
+
+test("katalog filtri: statik sahifadan filtrli natijaga va orqaga", async ({ page }) => {
+  await page.goto("/advokatlar");
+  const count = async () => Number((await page.getByText(/\d+ ta advokat topildi/).textContent())!.match(/\d+/)![0]);
+  const all = await count();
+  // “Saralash” roʻyxatida ham “Tajriba boʻyicha” bor — aniq sarlavhali maydon olinadi
+  const exp = page.locator("label", { has: page.getByText("Tajriba", { exact: true }) }).locator("select");
+  // Filtr tanlanadi — manzilga parametr qoʻshiladi (middleware ichki dinamik marshrutga yoʻnaltiradi)
+  await exp.selectOption("10");
+  await expect(page).toHaveURL(/\/advokatlar\?tajriba=10$/);
+  await expect.poll(count).toBeLessThan(all);
+  await expect(exp).toHaveValue("10");
+  // Tanlangan filtr sahifa yangilanganda ham saqlanadi
+  await page.reload();
+  await expect(exp).toHaveValue("10");
+  // Tozalash — yana statik sahifa
+  await page.getByRole("button", { name: "Tozalash" }).click();
+  await expect(page).toHaveURL(/\/advokatlar$/);
+  await expect.poll(count).toBe(all);
+});
+
+test("tor ekran (360 px): sarlavha sigʻadi @mobile", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  await page.goto("/");
+  // Logotip, uchala til tugmasi va menyu tugmasi bir qatorda, ekrandan chiqmaydi
+  await expect(page.getByRole("button", { name: "Menyu" })).toBeInViewport({ ratio: 1 });
+  for (const name of ["Oʻzbekcha", "Ўзбекча", "Русский"]) await expect(page.getByRole("link", { name })).toBeInViewport({ ratio: 1 });
+  // Menyu tugmasi ekran chetiga taqalmaydi (chekka boʻshliq saqlanadi) — 320 px da ham
+  for (const width of [360, 320]) {
+    await page.setViewportSize({ width, height: 740 });
+    const right = await page.getByRole("button", { name: "Menyu" }).evaluate((el) => window.innerWidth - el.getBoundingClientRect().right);
+    expect(right, `chekka boʻshliq ${width}px da`).toBeGreaterThanOrEqual(8);
+  }
+  // “Kirish” telefonda sarlavhada emas, menyu ichida
+  await expect(page.locator("header").getByRole("link", { name: "Kirish" })).toBeHidden();
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  expect(overflow).toBeLessThanOrEqual(1);
 });

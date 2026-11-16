@@ -256,7 +256,7 @@ async function main() {
   }
 
   // Maʼlumot sahifalari (admin panelda tahrirlanadi — mavjud boʻlsa tegilmaydi)
-  const brand = process.env.NEXT_PUBLIC_BRAND_NAME || "AdvokatKerak";
+  const brand = process.env.NEXT_PUBLIC_BRAND_NAME || "AdvokatBor";
   for (const pg of PAGES) {
     const contentUz = pg.contentUz.replaceAll("{brand}", brand).replace(/\n/g, "");
     const contentRu = pg.contentRu.replaceAll("{brand}", brand).replace(/\n/g, "");

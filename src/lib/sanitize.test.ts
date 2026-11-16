@@ -35,6 +35,6 @@ describe("transliteratsiya (HTML)", () => {
   });
 
   it("brend nomini lotincha qoldiradi", () => {
-    expect(latinToCyrillicKeep("AdvokatKerak platformasi", ["AdvokatKerak"])).toBe("AdvokatKerak платформаси");
+    expect(latinToCyrillicKeep("AdvokatBor platformasi", ["AdvokatBor"])).toBe("AdvokatBor платформаси");
   });
 });

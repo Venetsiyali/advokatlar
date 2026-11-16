@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { applySupabaseEnv, envBySuffix, sessionUrlFromPooled, supabaseStorageConfig } from "./supabase-env";
+import { applySupabaseEnv, envBySuffix, limitPoolForBuild, sessionUrlFromPooled, supabaseStorageConfig } from "./supabase-env";
 import { sbEnsureBuckets, sbPublicUrl, sbSignedUrl, sbUpload } from "./supabase-storage";
 
 const POOLED = "postgres://postgres.abc:pw@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require&supa=base-pooler.x&pgbouncer=true";
@@ -49,6 +49,16 @@ describe("Vercel ↔ Supabase oʻzgaruvchilari", () => {
     applySupabaseEnv(env);
     expect(env.DIRECT_URL).toBe(env.DATABASE_URL);
     expect(sessionUrlFromPooled(env.DATABASE_URL!)).toBeUndefined();
+  });
+
+  it("build vaqtida ulanishlar soni cheklanadi, ishlash vaqtida — yoʻq", () => {
+    const build: Record<string, string | undefined> = { NEXT_PHASE: "phase-production-build", DATABASE_URL: POOLED + "&connection_limit=5" };
+    limitPoolForBuild(build);
+    expect(new URL(build.DATABASE_URL!).searchParams.get("connection_limit")).toBe("2");
+    expect(new URL(build.DATABASE_URL!).searchParams.get("pgbouncer")).toBe("true");
+    const runtime: Record<string, string | undefined> = { DATABASE_URL: POOLED + "&connection_limit=5" };
+    limitPoolForBuild(runtime);
+    expect(new URL(runtime.DATABASE_URL!).searchParams.get("connection_limit")).toBe("5");
   });
 
   it("Storage sozlamasi: service role yoki yangi secret kalit", () => {

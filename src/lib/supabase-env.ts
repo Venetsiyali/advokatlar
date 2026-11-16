@@ -85,3 +85,20 @@ export function supabaseStorageConfig(env: Env) {
     publicBucket: env.SUPABASE_PUBLIC_BUCKET || "public",
   };
 }
+
+/**
+ * Build vaqtida (next build) sahifalar bir necha parallel jarayonda generatsiya qilinadi va har biri
+ * oʻz ulanishlar toʻplamini ochadi. Jami ulanishlar baza chegarasidan oshmasligi uchun har bir jarayon
+ * 2 ta ulanish bilan cheklanadi (navbat kutish vaqti uzaytiriladi).
+ */
+export function limitPoolForBuild(env: Env) {
+  if (env.NEXT_PHASE !== "phase-production-build" || !env.DATABASE_URL) return;
+  try {
+    const u = new URL(env.DATABASE_URL);
+    u.searchParams.set("connection_limit", "2");
+    u.searchParams.set("pool_timeout", "60");
+    env.DATABASE_URL = u.toString();
+  } catch {
+    // URL formati notoʻgʻri boʻlsa — Prisma oʻzi aniq xato beradi
+  }
+}

@@ -13,13 +13,14 @@ import { getLawyerBySlug } from "@/server/lawyers";
 import { lname } from "@/lib/localized";
 import { alternates, jsonLd, localeUrl } from "@/lib/seo";
 import { formatUzs } from "@/lib/utils";
+import { lawyerParams } from "@/server/static-params";
 
 /** ISR: sahifa keshlanadi; admin tahriri revalidatePath orqali darhol yangilaydi */
 export const revalidate = 300;
 
-/** Sahifalar birinchi soʻrovda generatsiya qilinib keshlanadi */
+/** Build vaqtida mavjud yozuvlar oldindan tayyorlanadi; yangilari — birinchi soʻrovda (ISR) */
 export function generateStaticParams() {
-  return [];
+  return lawyerParams();
 }
 
 type Props = { params: Promise<{ locale: string; slug: string }> };

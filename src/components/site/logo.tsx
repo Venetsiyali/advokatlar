@@ -13,9 +13,10 @@ export function LogoMark({ className = "size-9" }: { className?: string }) {
 
 export function Logo() {
   return (
-    <span className="flex items-center gap-2">
-      <LogoMark />
-      <span className="text-lg font-extrabold tracking-tight text-navy-900">{site.brand}</span>
+    <span className="flex items-center gap-1.5 sm:gap-2">
+      <LogoMark className="size-8 sm:size-9" />
+      {/* Tor telefonlarda (320–360 px) til tugmalari va menyu bilan bir qatorga sigʻishi uchun kichikroq */}
+      <span className="text-base font-extrabold tracking-tight text-navy-900 sm:text-lg">{site.brand}</span>
     </span>
   );
 }

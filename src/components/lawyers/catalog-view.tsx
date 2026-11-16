@@ -49,6 +49,7 @@ export async function CatalogView({
           basePath={basePath}
           hide={hide}
           fixedRegion={hide?.includes("viloyat") ? filters.region : undefined}
+          current={Object.fromEntries(Object.entries(searchParams).filter((e): e is [string, string] => typeof e[1] === "string" && !!e[1]))}
           regions={regions.map((r) => ({ value: r.slug, label: lname(r, locale) }))}
           districtsByRegion={districtsByRegion}
           specs={specs.map((s) => ({ value: s.slug, label: lname(s, locale) }))}

@@ -11,13 +11,14 @@ import { jsonLd, localeUrl } from "@/lib/seo";
 import { site } from "@/lib/site";
 import { buttonVariants } from "@/components/ui/button";
 import { CtaBox, PageHeader } from "@/components/site/page-header";
+import { articleParams } from "@/server/static-params";
 
 /** ISR: sahifa keshlanadi; admin tahriri revalidatePath orqali darhol yangilaydi */
 export const revalidate = 3600;
 
-/** Sahifalar birinchi soʻrovda generatsiya qilinib keshlanadi */
+/** Build vaqtida mavjud yozuvlar oldindan tayyorlanadi; yangilari — birinchi soʻrovda (ISR) */
 export function generateStaticParams() {
-  return [];
+  return articleParams();
 }
 
 type Props = { params: Promise<{ locale: string; slug: string }> };

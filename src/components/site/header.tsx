@@ -19,7 +19,7 @@ export async function Header() {
   ];
   return (
     <header className="sticky top-0 z-40 border-b border-navy-100/70 bg-white/90 backdrop-blur">
-      <div className="relative mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
+      <div className="relative mx-auto flex h-16 max-w-6xl items-center justify-between gap-1.5 px-3 sm:gap-4 sm:px-4">
         <Link href="/" aria-label="Bosh sahifa">
           <Logo />
         </Link>
@@ -30,11 +30,15 @@ export async function Header() {
             </Link>
           ))}
         </nav>
-        <div className="hidden items-center gap-4 lg:flex">
-          <LocaleSwitcher />
-          <AccountLink {...account} className={buttonVariants({ variant: "navy", size: "sm" })} />
+        {/* Til almashtirgich barcha ekranlarda koʻrinadi; telefonda — logotip va menyu oʻrtasida */}
+        <div className="flex items-center gap-1 sm:gap-2 lg:gap-4">
+          <LocaleSwitcher label={t("language")} />
+          {/* Telefonda “Kirish” menyu ichida; oʻrovchi span — tugmaning inline-flex klassi hidden ni bosib ketmasligi uchun */}
+          <span className="hidden lg:block">
+            <AccountLink {...account} className={buttonVariants({ variant: "navy", size: "sm" })} />
+          </span>
+          <MobileMenu items={items} account={account} menuLabel={t("menu")} closeLabel={t("close")} />
         </div>
-        <MobileMenu items={items} account={account} menuLabel={t("menu")} closeLabel={t("close")} />
       </div>
     </header>
   );

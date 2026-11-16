@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "@/i18n/navigation";
-import { useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { SlidersHorizontal, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -36,6 +35,7 @@ export function CatalogFilters({
   sortOptions,
   labels,
   fixedRegion,
+  current,
 }: {
   basePath: string;
   hide?: ("viloyat" | "yonalish")[];
@@ -48,9 +48,11 @@ export function CatalogFilters({
   sortOptions: Opt[];
   labels: FilterLabels;
   fixedRegion?: string;
+  /** Joriy filtr qiymatlari serverdan (useSearchParams emas — statik sahifa roʻyxati HTML'da qolishi uchun) */
+  current: Record<string, string>;
 }) {
   const router = useRouter();
-  const sp = useSearchParams();
+  const sp = new URLSearchParams(current);
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState(sp.get("q") ?? "");

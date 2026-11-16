@@ -14,13 +14,14 @@ import { buttonVariants } from "@/components/ui/button";
 import { LawyerCard } from "@/components/lawyers/lawyer-card";
 import { CtaBox, PageHeader } from "@/components/site/page-header";
 import { TopicIcon } from "@/components/icons";
+import { topicParams } from "@/server/static-params";
 
 /** ISR: sahifa keshlanadi; admin tahriri revalidatePath orqali darhol yangilaydi */
 export const revalidate = 3600;
 
-/** Sahifalar birinchi soʻrovda generatsiya qilinib keshlanadi */
+/** Build vaqtida mavjud yozuvlar oldindan tayyorlanadi; yangilari — birinchi soʻrovda (ISR) */
 export function generateStaticParams() {
-  return [];
+  return topicParams();
 }
 
 type Props = { params: Promise<{ locale: string; slug: string }> };

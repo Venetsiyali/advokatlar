@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# AdvokatKerak — bitta Dockerfile, uchta maqsad (target):
+# AdvokatBor — bitta Dockerfile, uchta maqsad (target):
 #   tools  — toʻliq manba + node_modules: Telegram bot va migratsiyalar (prisma migrate deploy / seed)
 #   runner — Next.js standalone server (sayt)
 # docker-compose.yml ularni kerakli servislar uchun ishlatadi.
