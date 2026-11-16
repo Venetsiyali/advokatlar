@@ -1,4 +1,8 @@
 import { PrismaClient } from "@prisma/client";
+import { applySupabaseEnv } from "./supabase-env";
+
+// Vercel ↔ Supabase integratsiyasi oʻzgaruvchilari (POSTGRES_PRISMA_URL ...) → DATABASE_URL / DIRECT_URL
+applySupabaseEnv(process.env);
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 

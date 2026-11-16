@@ -4,12 +4,18 @@ import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl as s3Sign } from "@aws-sdk/s3-request-presigner";
+import { supabaseStorageConfig } from "./supabase-env";
+import { sbDelete, sbPublicUrl, sbSignedUrl, sbUpload } from "./supabase-storage";
 
-// S3-mos xotira (S3_BUCKET va boshqalar berilsa; masalan Supabase Storage) yoki lokal ./storage papkasi (mock).
+// Uch rejim (ustuvorlik tartibida):
+//   1) S3-mos xotira — S3_BUCKET, S3_ACCESS_KEY, S3_SECRET_KEY berilsa
+//   2) Supabase Storage — Vercel ↔ Supabase integratsiyasi (SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY), kalitlar shart emas
+//   3) lokal ./storage papkasi (ishlab chiqish / Docker)
 // "public/" prefiksli kalitlar (avatarlar, muqovalar) ochiq, qolganlari (hujjatlar) faqat imzolangan URL orqali.
 // S3_PUBLIC_BUCKET berilsa, ochiq fayllar alohida (public) bucket'da, hujjatlar esa yopiq S3_BUCKET da saqlanadi.
 
 const s3Enabled = () => Boolean(process.env.S3_BUCKET && process.env.S3_ACCESS_KEY && process.env.S3_SECRET_KEY);
+const supa = () => (s3Enabled() ? null : supabaseStorageConfig(process.env));
 const LOCAL_DIR = path.resolve(process.env.LOCAL_STORAGE_DIR || "./storage");
 
 let client: S3Client | null = null;
@@ -29,6 +35,7 @@ export const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 export const MAX_FILE_BYTES = 4 * 1024 * 1024;
 
 const bucketFor = (key: string) => (key.startsWith("public/") && process.env.S3_PUBLIC_BUCKET) || process.env.S3_BUCKET!;
+const sbBucketFor = (key: string, s: NonNullable<ReturnType<typeof supa>>) => (key.startsWith("public/") ? s.publicBucket : s.bucket);
 
 const EXT: Record<string, string> = {
   "application/pdf": "pdf",
@@ -54,12 +61,15 @@ export async function storeFile(file: File, prefix: string, allowed: string[]): 
   const mime = sniffMime(buf);
   if (!mime || !allowed.includes(mime)) throw new Error("FILE_TYPE");
   const key = `${prefix.replace(/\/$/, "")}/${randomUUID()}.${EXT[mime]}`;
+  const sb = supa();
   if (s3Enabled()) {
     await s3().send(new PutObjectCommand({ Bucket: bucketFor(key), Key: key, Body: buf, ContentType: mime }));
+  } else if (sb) {
+    await sbUpload(sb, sbBucketFor(key, sb), key, buf, mime);
   } else {
     // Vercel'da disk faqat oʻqish uchun — S3 (Supabase Storage) sozlanmagan boʻlsa aniq xato
     if (process.env.VERCEL) {
-      console.error("[storage] S3_* sozlanmagan: Vercel'da fayl saqlab boʻlmaydi");
+      console.error("[storage] Fayl xotirasi sozlanmagan: Supabase integratsiyasi yoki S3_* kerak");
       throw new Error("STORAGE_NOT_CONFIGURED");
     }
     const full = safeLocalPath(key);
@@ -70,7 +80,9 @@ export async function storeFile(file: File, prefix: string, allowed: string[]): 
 }
 
 export async function deleteFile(key: string) {
+  const sb = supa();
   if (s3Enabled()) await s3().send(new DeleteObjectCommand({ Bucket: bucketFor(key), Key: key }));
+  else if (sb) await sbDelete(sb, sbBucketFor(key, sb), key).catch((e) => console.error("[storage]", e));
   else await unlink(safeLocalPath(key)).catch(() => {});
 }
 
@@ -92,6 +104,8 @@ export async function signedUrl(key: string, ttlSec = 600): Promise<string> {
   if (s3Enabled()) {
     return s3Sign(s3(), new GetObjectCommand({ Bucket: bucketFor(key), Key: key }), { expiresIn: ttlSec });
   }
+  const sb = supa();
+  if (sb) return sbSignedUrl(sb, sbBucketFor(key, sb), key, ttlSec);
   const exp = Math.floor(Date.now() / 1000) + ttlSec;
   return `/api/files/${key}?exp=${exp}&sig=${sign(key, exp)}`;
 }
@@ -109,5 +123,7 @@ export function publicUrl(key: string) {
     const base = process.env.S3_PUBLIC_URL || `${process.env.S3_ENDPOINT}/${bucketFor(key)}`;
     return `${base.replace(/\/$/, "")}/${key}`;
   }
+  const sb = supa();
+  if (sb) return sbPublicUrl(sb, sbBucketFor(key, sb), key);
   return `/api/files/${key}`;
 }

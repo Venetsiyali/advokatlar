@@ -20,7 +20,7 @@
     "payments:simulate": "node --conditions=react-server --env-file=.env --import tsx scripts/payments-simulate.ts",
     "test:e2e": "playwright test",
     "start:prod": "node scripts/start-standalone.mjs",
-    "vercel-build": "node scripts/vercel-build.mjs"
+    "vercel-build": "tsx scripts/vercel-build.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1169.0",

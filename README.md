@@ -110,38 +110,30 @@ Sayt Vercel'da (serverless), baza va fayllar Supabase'da. Telegram bot alohida s
 
 > ⚠️ Vercel va Supabase serverlari Oʻzbekistonda emas. Bu variantda fuqarolarning shaxsga doir maʼlumotlari chet elda saqlanadi. Pastdagi “Maʼlumotlarni lokalizatsiya qilish” boʻlimini oʻqing. Qonun talabiga toʻliq mos joylash — Oʻzbekistondagi serverda Docker Compose.
 
-### 1. Supabase
+### 1. Supabase (Vercel integratsiyasi orqali — tavsiya etiladi)
 
-1. [supabase.com](https://supabase.com) da yangi loyiha oching. Region tavsiyasi: **Frankfurt (eu-central-1)**. Vercel funksiyalari ham `fra1` da ishlaydi (`vercel.json`).
-2. **Project → Connect** oynasidan ikkita ulanish qatorini oling:
-   - **Transaction pooler** (6543-port). Bu `DATABASE_URL`, oxiriga `?pgbouncer=true&connection_limit=1` qoʻshing.
-   - **Session pooler** (5432-port). Bu `DIRECT_URL`, migratsiyalar uchun. “Direct connection” emas: u faqat IPv6 da ishlaydi, Vercel build esa IPv4.
-3. **Storage** boʻlimida ikkita bucket yarating:
-   - `documents`: **Private**. Advokat hujjatlari va murojaat fayllari.
-   - `public`: **Public**. Avatarlar va maqola muqovalari.
-4. **Storage → Settings → S3 Connection** boʻlimida endpoint va region koʻrsatilgan. Shu yerda **S3 Access Key** yarating.
+Vercel loyihasida **Storage → Connect Database → Supabase** (yoki **Integrations → Supabase**) orqali Supabase loyihasini ulang. Region tavsiyasi: **Frankfurt (eu-central-1)**. Vercel funksiyalari ham `fra1` da ishlaydi (`vercel.json`). **Production** muhiti belgilangan boʻlsin.
+
+Integratsiya `POSTGRES_PRISMA_URL`, `POSTGRES_URL_NON_POOLING`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` va boshqa oʻzgaruvchilarni oʻzi qoʻshadi. Loyiha ularni avtomatik taniydi (`src/lib/supabase-env.ts`):
+- `DATABASE_URL` ← `POSTGRES_PRISMA_URL` (pooler, `pgbouncer=true&connection_limit=1` qoʻshiladi);
+- `DIRECT_URL` ← pooler'ning 5432 (session) porti — migratsiyalar uchun (Vercel build IPv4, `db.<ref>.supabase.co` esa faqat IPv6);
+- fayllar ← Supabase Storage, server kaliti bilan. `documents` (yopiq) va `public` (ochiq) bucket'lari birinchi build'da **avtomatik yaratiladi**, S3 kalitlari kerak emas.
+
+> Integratsiyasiz ham boʻladi: `DATABASE_URL` (Transaction pooler + `?pgbouncer=true&connection_limit=1`) va `DIRECT_URL` (Session pooler) ni qoʻlda kiriting; fayllar uchun `S3_*` (`.env.example`). Qoʻlda berilgan qiymatlar doim ustun.
 
 ### 2. Vercel
 
-1. GitHub repozitoriyni Vercel'ga import qiling (**Add New → Project**). Framework avtomatik aniqlanadi. Build buyrugʻi `vercel.json` da (`npm run vercel-build`).
-2. **Settings → Environment Variables** ga kiriting (Production):
+1. GitHub repozitoriyni Vercel'ga import qiling (**Add New → Project**). Build buyrugʻi `vercel.json` da (`npm run vercel-build`). Import paytida taklif qilinadigan **Prisma Postgres** va **Amazon S3** integratsiyalari kerak emas.
+2. **Settings → Environment Variables** ga (Production) Supabase'dan tashqari faqat quyidagilar kerak:
 
 | Oʻzgaruvchi | Qiymat |
 |---|---|
-| `DATABASE_URL` | Supabase Transaction pooler + `?pgbouncer=true&connection_limit=1` |
-| `DIRECT_URL` | Supabase Session pooler |
-| `AUTH_SECRET` | `openssl rand -base64 32` |
-| `NEXT_PUBLIC_SITE_URL` | `https://advokatkerak.uz` (yoki `https://<loyiha>.vercel.app`) |
-| `S3_ENDPOINT` | `https://<ref>.supabase.co/storage/v1/s3` |
-| `S3_REGION` | Supabase loyihasi regioni, masalan `eu-central-1` |
-| `S3_ACCESS_KEY`, `S3_SECRET_KEY` | Supabase S3 Access Key |
-| `S3_BUCKET` | `documents` |
-| `S3_PUBLIC_BUCKET` | `public` |
-| `S3_PUBLIC_URL` | `https://<ref>.supabase.co/storage/v1/object/public/public` |
-| `CRON_SECRET` | `openssl rand -hex 32` |
+| `AUTH_SECRET` | tasodifiy qator: `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"` |
+| `CRON_SECRET` | tasodifiy qator: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
 | `ADMIN_PHONE` | birinchi admin raqami, `+998XXXXXXXXX` |
 | `SEED_ON_BUILD` | birinchi deploy uchun `1` |
-| `ESKIZ_*`, `TELEGRAM_*`, `PAYME_*`, `CLICK_*`, `NEXT_PUBLIC_*` | `.env.example` dagi tavsif boʻyicha |
+| `NEXT_PUBLIC_SITE_URL` | ixtiyoriy: oʻz domeningiz. Berilmasa — Vercel production domeni |
+| `ESKIZ_*`, `TELEGRAM_*`, `PAYME_*`, `CLICK_*`, `NEXT_PUBLIC_*` | keyinroq, `.env.example` dagi tavsif boʻyicha |
 
 3. **Deploy**. Build vaqtida migratsiyalar Supabase'ga qoʻllanadi. `SEED_ON_BUILD=1` boʻlsa, boshlangʻich maʼlumotlar va admin yaratiladi. Keyin `SEED_ON_BUILD` ni `0` qilish mumkin, qayta ishga tushsa ham zarar yoʻq.
 4. Preview deploy'lar production bazasiga migratsiya qilmaydi. Ular `robots.txt` bilan qidiruvdan yopiladi.
@@ -168,7 +160,7 @@ Javobsiz murojaatlarni 2 soatdan keyin keyingi guruhga yuborish va obuna muddatl
 ### Vercel cheklovlari
 
 - Yuklanadigan fayl hajmi **4 MB gacha** (Vercel soʻrov limiti 4.5 MB).
-- Fayllar faqat Supabase Storage'da saqlanadi. `S3_*` berilmasa, yuklash xato beradi (Vercel diski faqat oʻqish uchun).
+- Fayllar Supabase Storage'da saqlanadi (integratsiya yoki `S3_*`). Ikkalasi ham boʻlmasa, yuklash xato beradi — Vercel diski faqat oʻqish uchun.
 - So'rovlar soni cheklovi (rate limit) har bir funksiya nusxasi xotirasida ishlaydi, shuning uchun serverless'da qatʼiy emas. OTP limitlari esa bazada, ular toʻliq ishlaydi.
 - `PAYMENTS_MOCK` va `OTP_DEV_ECHO` production'da `0` boʻlishi shart.
 
