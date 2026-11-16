@@ -1,26 +1,95 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --color-navy-50: #eef3f9;
+  --color-navy-100: #d6e2f0;
+  --color-navy-200: #aec4df;
+  --color-navy-500: #2b5b8f;
+  --color-navy-600: #1d4774;
+  --color-navy-700: #163a60;
+  --color-navy-800: #102c4a;
+  --color-navy-900: #0b1f36;
+
+  --color-brand-50: #ebf8f2;
+  --color-brand-100: #cdeedd;
+  --color-brand-500: #12a06c;
+  --color-brand-600: #0c8a5c;
+  --color-brand-700: #0a714c;
+
+  --color-gold-400: #f5b83d;
+  --color-gold-500: #e9a21b;
+
+  --shadow-soft: 0 1px 2px rgb(16 44 74 / 0.04), 0 8px 24px -8px rgb(16 44 74 / 0.10);
+  --shadow-lift: 0 2px 4px rgb(16 44 74 / 0.05), 0 16px 40px -12px rgb(16 44 74 / 0.18);
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  color-scheme: light;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #ffffff;
+  color: var(--color-navy-900);
+  -webkit-font-smoothing: antialiased;
+}
+
+.prose-content h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 1.5rem 0 0.5rem;
+  color: var(--color-navy-900);
+}
+.prose-content p {
+  margin: 0.75rem 0;
+  line-height: 1.7;
+  color: #334155;
+}
+.prose-content ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+  margin: 0.75rem 0;
+  color: #334155;
+}
+.prose-content li {
+  margin: 0.35rem 0;
+}
+.prose-content li > p {
+  margin: 0;
+}
+.prose-content h3 {
+  font-size: 1.075rem;
+  font-weight: 700;
+  margin: 1.25rem 0 0.4rem;
+  color: var(--color-navy-900);
+}
+.prose-content ol {
+  list-style: decimal;
+  padding-left: 1.25rem;
+  margin: 0.75rem 0;
+  color: #334155;
+}
+.prose-content a {
+  color: var(--color-brand-700);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.prose-content blockquote {
+  border-left: 3px solid var(--color-brand-500);
+  background: var(--color-navy-50);
+  margin: 1rem 0;
+  padding: 0.5rem 1rem;
+  border-radius: 0 0.75rem 0.75rem 0;
+}
+.prose-content hr {
+  border: 0;
+  border-top: 1px solid var(--color-navy-100);
+  margin: 1.5rem 0;
+}
+.prose-content strong {
+  color: var(--color-navy-900);
+}
+.prose-content > :first-child {
+  margin-top: 0;
 }

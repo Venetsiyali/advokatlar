@@ -1,0 +1,106 @@
+# AdvokatKerak — production stek. Ishga tushirish (README ga qarang):
+#   cp .env.example .env   # qiymatlarni toʻldiring
+#   docker compose up -d --build
+#   docker compose --profile proxy up -d   # Caddy bilan avtomatik HTTPS (ixtiyoriy)
+#
+# Shaxsga doir maʼlumotlar (PostgreSQL, yuklangan hujjatlar) shu serverning disk hajmlarida saqlanadi —
+# server Oʻzbekiston hududida joylashgan boʻlishi shart (README: “Maʼlumotlarni lokalizatsiya qilish”).
+
+x-app-env: &app-env
+  env_file: .env
+  environment:
+    DATABASE_URL: postgresql://${POSTGRES_USER:-advokat}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD .env da berilishi shart}@postgres:5432/${POSTGRES_DB:-advokat}?schema=public
+    DIRECT_URL: postgresql://${POSTGRES_USER:-advokat}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD .env da berilishi shart}@postgres:5432/${POSTGRES_DB:-advokat}?schema=public
+    NODE_ENV: production
+
+x-build-args: &build-args
+  NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:?NEXT_PUBLIC_SITE_URL .env da berilishi shart}
+  NEXT_PUBLIC_BRAND_NAME: ${NEXT_PUBLIC_BRAND_NAME:-AdvokatKerak}
+  NEXT_PUBLIC_CONTACT_PHONE: ${NEXT_PUBLIC_CONTACT_PHONE:-}
+  NEXT_PUBLIC_CONTACT_EMAIL: ${NEXT_PUBLIC_CONTACT_EMAIL:-}
+  NEXT_PUBLIC_TELEGRAM_BOT: ${NEXT_PUBLIC_TELEGRAM_BOT:-}
+  NEXT_PUBLIC_TELEGRAM_CHANNEL: ${NEXT_PUBLIC_TELEGRAM_CHANNEL:-}
+  NEXT_PUBLIC_INSTAGRAM: ${NEXT_PUBLIC_INSTAGRAM:-}
+  NEXT_PUBLIC_OPERATOR_INFO: ${NEXT_PUBLIC_OPERATOR_INFO:-}
+  NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
+  NEXT_PUBLIC_GA_ID: ${NEXT_PUBLIC_GA_ID:-}
+  NEXT_PUBLIC_YM_ID: ${NEXT_PUBLIC_YM_ID:-}
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-advokat}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD .env da berilishi shart}
+      POSTGRES_DB: ${POSTGRES_DB:-advokat}
+      POSTGRES_INITDB_ARGS: --encoding=UTF8 --locale=C.UTF-8
+      TZ: Asia/Tashkent
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # Tashqariga ochilmaydi; zaxira nusxa: README → “Zaxira nusxa”
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-advokat} -d ${POSTGRES_DB:-advokat}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Bir martalik: migratsiyalar (+ SEED=1 boʻlsa — boshlangʻich maʼlumotlar)
+  migrate:
+    build: { context: ., target: tools }
+    image: advokatkerak-tools
+    <<: *app-env
+    command: ["sh", "-c", "npx prisma migrate deploy && if [ \"$${SEED:-0}\" = \"1\" ]; then npx prisma db seed; fi"]
+    depends_on:
+      postgres: { condition: service_healthy }
+    restart: "no"
+
+  web:
+    build:
+      context: .
+      target: runner
+      args: *build-args
+    image: advokatkerak-web
+    restart: unless-stopped
+    <<: *app-env
+    volumes:
+      - storage:/app/storage
+    ports:
+      # Faqat lokal — tashqariga reverse proxy (Caddy/nginx) orqali HTTPS bilan
+      - "127.0.0.1:${WEB_PORT:-3000}:3000"
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  bot:
+    image: advokatkerak-tools
+    restart: unless-stopped
+    <<: *app-env
+    command: ["npm", "run", "bot"]
+    ports:
+      - "127.0.0.1:${BOT_PORT:-8081}:${BOT_PORT:-8081}"
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  # Ixtiyoriy: avtomatik HTTPS (Let's Encrypt). DOMAIN .env da. Ishga tushirish: --profile proxy
+  caddy:
+    image: caddy:2-alpine
+    profiles: ["proxy"]
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+      BOT_WEBHOOK_PATH: ${BOT_WEBHOOK_PATH:-/telegram/webhook}
+      BOT_PORT: ${BOT_PORT:-8081}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [web, bot]
+
+volumes:
+  pgdata:
+  storage:
+  caddy_data:
+  caddy_config:

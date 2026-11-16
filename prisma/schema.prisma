@@ -1,0 +1,426 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  /// Ilova ulanishi. Supabase'da — pooler (6543-port, ?pgbouncer=true&connection_limit=1)
+  url       = env("DATABASE_URL")
+  /// Migratsiyalar uchun toʻgʻridan-toʻgʻri ulanish (Supabase: 5432-port). Lokal/Docker'da DATABASE_URL bilan bir xil
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  CLIENT
+  LAWYER
+  ADMIN
+}
+
+enum Locale {
+  uz
+  uz_Cyrl
+  ru
+}
+
+enum LawyerStatus {
+  KUTILMOQDA
+  TASDIQLANGAN
+  RAD
+  BLOK
+}
+
+enum RequestStatus {
+  YANGI
+  YUBORILDI
+  QABUL_QILINDI
+  JARAYONDA
+  YOPILDI
+  BEKOR_QILINDI
+}
+
+enum AssignmentStatus {
+  YUBORILDI
+  QABUL_QILDI
+  RAD_ETDI
+  BAND_QILINGAN
+  MUDDATI_OTDI
+}
+
+enum ContactMethod {
+  CALL
+  TELEGRAM
+}
+
+enum RequestSource {
+  WEB
+  TELEGRAM
+}
+
+enum DocumentType {
+  LITSENZIYA
+  GUVOHNOMA
+  DIPLOM
+  BOSHQA
+}
+
+enum SubscriptionStatus {
+  SINOV
+  FAOL
+  MUDDATI_OTGAN
+  BEKOR
+}
+
+enum PaymentProvider {
+  PAYME
+  CLICK
+  MANUAL
+}
+
+enum PaymentStatus {
+  KUTILMOQDA
+  TOLANDI
+  BEKOR
+  XATO
+}
+
+enum ReviewStatus {
+  KUTILMOQDA
+  TASDIQLANGAN
+  RAD
+}
+
+model User {
+  id         String   @id @default(cuid())
+  role       Role     @default(CLIENT)
+  phone      String?  @unique
+  telegramId String?  @unique
+  name       String?
+  locale     Locale   @default(uz)
+  isBlocked  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  lawyerProfile LawyerProfile?
+  requests      Request[]
+  reviews       Review[]
+  auditLogs     AuditLog[]
+  articles      Article[]
+}
+
+/// SMS OTP kodlari (hash ko'rinishida saqlanadi)
+model OtpCode {
+  id        String    @id @default(cuid())
+  phone     String
+  codeHash  String
+  attempts  Int       @default(0)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([phone, createdAt])
+}
+
+model Region {
+  id         String          @id @default(cuid())
+  slug       String          @unique
+  nameUz     String
+  nameUzCyrl String
+  nameRu     String
+  sortOrder  Int             @default(0)
+  districts  District[]
+  lawyers    LawyerProfile[]
+  requests   Request[]
+}
+
+model District {
+  id         String          @id @default(cuid())
+  slug       String
+  nameUz     String
+  nameUzCyrl String
+  nameRu     String
+  regionId   String
+  region     Region          @relation(fields: [regionId], references: [id], onDelete: Cascade)
+  lawyers    LawyerProfile[]
+  requests   Request[]
+
+  @@unique([regionId, slug])
+}
+
+model Specialization {
+  id         String                 @id @default(cuid())
+  slug       String                 @unique
+  nameUz     String
+  nameUzCyrl String
+  nameRu     String
+  icon       String?
+  sortOrder  Int                    @default(0)
+  lawyers    LawyerSpecialization[]
+  requests   Request[]
+  topics     TopicPage[]
+}
+
+model LawyerProfile {
+  id               String       @id @default(cuid())
+  userId           String       @unique
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slug             String       @unique
+  fullName         String
+  avatarUrl        String?
+  bio              String?
+  education        String?
+  workplace        String?
+  experienceYears  Int          @default(0)
+  languages        String[]     @default(["uz"])
+  licenseNumber    String?
+  licenseVerified  Boolean      @default(false)
+  consultationFee  Int?
+  status           LawyerStatus @default(KUTILMOQDA)
+  rejectReason     String?
+  isOnDuty         Boolean      @default(false)
+  rating           Float        @default(0)
+  reviewCount      Int          @default(0)
+  avgResponseMins  Int?
+  regionId         String?
+  region           Region?      @relation(fields: [regionId], references: [id])
+  districtId       String?
+  district         District?    @relation(fields: [districtId], references: [id])
+  telegramLinkCode String?      @unique
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  specializations  LawyerSpecialization[]
+  documents        Document[]
+  assignments      RequestAssignment[]
+  assignedRequests Request[]              @relation("AssignedLawyer")
+  targetedRequests Request[]              @relation("TargetLawyer")
+  reviews          Review[]
+  subscription     Subscription?
+  payments         Payment[]
+
+  @@index([status, regionId])
+  @@index([rating])
+}
+
+model LawyerSpecialization {
+  lawyerId         String
+  specializationId String
+  lawyer           LawyerProfile  @relation(fields: [lawyerId], references: [id], onDelete: Cascade)
+  specialization   Specialization @relation(fields: [specializationId], references: [id], onDelete: Cascade)
+
+  @@id([lawyerId, specializationId])
+}
+
+model Document {
+  id         String        @id @default(cuid())
+  lawyerId   String
+  lawyer     LawyerProfile @relation(fields: [lawyerId], references: [id], onDelete: Cascade)
+  type       DocumentType
+  storageKey String
+  fileName   String
+  mimeType   String
+  size       Int
+  createdAt  DateTime      @default(now())
+}
+
+/// Mijoz murojaati
+model Request {
+  id               String         @id @default(cuid())
+  code             String         @unique
+  clientId         String?
+  client           User?          @relation(fields: [clientId], references: [id])
+  name             String
+  phone            String
+  phoneVerified    Boolean        @default(false)
+  regionId         String
+  region           Region         @relation(fields: [regionId], references: [id])
+  districtId       String?
+  district         District?      @relation(fields: [districtId], references: [id])
+  specializationId String
+  specialization   Specialization @relation(fields: [specializationId], references: [id])
+  description      String         @db.VarChar(500)
+  contactMethod    ContactMethod  @default(CALL)
+  source           RequestSource  @default(WEB)
+  attachmentKey    String?
+  status           RequestStatus  @default(YANGI)
+  targetLawyerId   String?
+  targetLawyer     LawyerProfile? @relation("TargetLawyer", fields: [targetLawyerId], references: [id])
+  assignedLawyerId String?
+  assignedLawyer   LawyerProfile? @relation("AssignedLawyer", fields: [assignedLawyerId], references: [id])
+  dispatchRound    Int            @default(0)
+  lastDispatchAt   DateTime?
+  adminAlertedAt   DateTime?
+  acceptedAt       DateTime?
+  closedAt         DateTime?
+  reviewToken      String?        @unique
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  assignments RequestAssignment[]
+  review      Review?
+
+  @@index([status, lastDispatchAt])
+}
+
+/// Murojaat qaysi advokatga, qaysi raundda yuborilgani va javob vaqti
+model RequestAssignment {
+  id          String           @id @default(cuid())
+  requestId   String
+  request     Request          @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  lawyerId    String
+  lawyer      LawyerProfile    @relation(fields: [lawyerId], references: [id], onDelete: Cascade)
+  round       Int
+  status      AssignmentStatus @default(YUBORILDI)
+  sentAt      DateTime         @default(now())
+  respondedAt DateTime?
+  tgMessageId Int?
+
+  @@unique([requestId, lawyerId])
+  @@index([lawyerId, status])
+}
+
+model Review {
+  id         String        @id @default(cuid())
+  requestId  String?       @unique
+  request    Request?      @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  lawyerId   String
+  lawyer     LawyerProfile @relation(fields: [lawyerId], references: [id], onDelete: Cascade)
+  authorId   String?
+  author     User?         @relation(fields: [authorId], references: [id])
+  authorName String
+  rating     Int
+  comment    String?
+  status     ReviewStatus  @default(KUTILMOQDA)
+  createdAt  DateTime      @default(now())
+
+  @@index([lawyerId, status])
+}
+
+model Plan {
+  id            String         @id @default(cuid())
+  slug          String         @unique
+  nameUz        String
+  nameUzCyrl    String
+  nameRu        String
+  priceUzs      Int
+  periodDays    Int            @default(30)
+  isActive      Boolean        @default(true)
+  features      Json           @default("[]")
+  sortOrder     Int            @default(0)
+  subscriptions Subscription[]
+  payments      Payment[]
+}
+
+model Subscription {
+  id         String             @id @default(cuid())
+  lawyerId   String             @unique
+  lawyer     LawyerProfile      @relation(fields: [lawyerId], references: [id], onDelete: Cascade)
+  planId     String?
+  plan       Plan?              @relation(fields: [planId], references: [id])
+  status     SubscriptionStatus @default(SINOV)
+  startsAt   DateTime           @default(now())
+  endsAt     DateTime
+  remindedAt DateTime?
+  updatedAt  DateTime           @updatedAt
+}
+
+model Payment {
+  id          String          @id @default(cuid())
+  lawyerId    String
+  lawyer      LawyerProfile   @relation(fields: [lawyerId], references: [id], onDelete: Cascade)
+  planId      String?
+  plan        Plan?           @relation(fields: [planId], references: [id])
+  provider    PaymentProvider
+  amountUzs   Int
+  /// Toʻlov qaysi muddatga (kun) — tarif oʻzgarsa ham toʻlangan davr saqlanadi
+  periodDays  Int             @default(30)
+  status      PaymentStatus   @default(KUTILMOQDA)
+  externalId  String?
+  /// Payme: tranzaksiya holati (1, 2, -1, -2), bekor qilish sababi, yaratilgan vaqt (ms)
+  extState    Int?
+  extReason   Int?
+  extCreateMs BigInt?
+  meta        Json?
+  createdAt   DateTime        @default(now())
+  paidAt      DateTime?
+  cancelledAt DateTime?
+
+  @@unique([provider, externalId])
+  @@index([provider, extCreateMs])
+  @@index([lawyerId, createdAt])
+}
+
+model Article {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  locale      Locale    @default(uz)
+  title       String
+  excerpt     String?
+  content     String
+  coverUrl    String?
+  published   Boolean   @default(false)
+  publishedAt DateTime?
+  authorId    String?
+  author      User?     @relation(fields: [authorId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+/// /mavzu/[slug] SEO landing sahifalari
+model TopicPage {
+  id               String          @id @default(cuid())
+  slug             String          @unique
+  title            String
+  titleUzCyrl      String?
+  titleRu          String?
+  summary          String?
+  summaryRu        String?
+  content          String
+  /// Rus tilidagi matn (boʻsh boʻlsa — oʻzbekcha koʻrsatiladi)
+  contentRu        String?
+  icon             String?
+  specializationId String?
+  specialization   Specialization? @relation(fields: [specializationId], references: [id])
+  showOnHome       Boolean         @default(false)
+  sortOrder        Int             @default(0)
+  published        Boolean         @default(true)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+}
+
+/// Admin paneldan o'zgartiriladigan sozlamalar (sinov muddati, narx va h.k.)
+model Setting {
+  key   String @id
+  value Json
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actor     User?    @relation(fields: [actorId], references: [id])
+  action    String
+  entity    String
+  entityId  String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+}
+
+/// Telegram bot dialog holati (grammY session storage)
+model BotSession {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+/// Admin paneldan tahrirlanadigan maʼlumot sahifalari: biz-haqimizda, aloqa, maxfiylik-siyosati, ommaviy-oferta
+model StaticPage {
+  slug          String   @id
+  titleUz       String
+  titleUzCyrl   String
+  titleRu       String
+  contentUz     String
+  contentUzCyrl String
+  contentRu     String
+  updatedAt     DateTime @updatedAt
+}

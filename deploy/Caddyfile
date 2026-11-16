@@ -1,0 +1,29 @@
+# Caddy: avtomatik HTTPS va reverse proxy. DOMAIN va BOT_WEBHOOK_PATH — docker-compose dan.
+{$DOMAIN} {
+	encode zstd gzip
+
+	# Telegram webhook → bot servisi
+	handle {$BOT_WEBHOOK_PATH} {
+		reverse_proxy bot:{$BOT_PORT}
+	}
+
+	# Qolgan hammasi → sayt
+	handle {
+		reverse_proxy web:3000
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	# Yuklanadigan fayllar (hujjatlar) uchun cheklov — server action limiti bilan mos
+	request_body {
+		max_size 8MB
+	}
+}
+
+# www → asosiy domen
+www.{$DOMAIN} {
+	redir https://{$DOMAIN}{uri} permanent
+}
