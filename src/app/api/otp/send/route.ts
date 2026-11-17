@@ -21,5 +21,5 @@ export async function POST(req: Request) {
   }
 
   const result = await sendOtp(phone);
-  return NextResponse.json(result, { status: result.ok ? 200 : result.error === "SMS_FAILED" ? 502 : 429 });
+  return NextResponse.json(result, { status: result.ok ? 200 : result.error === "SMS_FAILED" || result.error === "SMS_UNAVAILABLE" ? 503 : 429 });
 }

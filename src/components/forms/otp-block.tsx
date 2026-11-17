@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { Field, PhoneInput, inputCls, phoneComplete } from "./fields";
 import { Turnstile } from "./turnstile";
 import { Button } from "@/components/ui/button";
+import { site } from "@/lib/site";
 
 export type OtpState = { phone: string; code: string; sent: boolean };
 
@@ -28,6 +29,7 @@ export function OtpBlock({
   const [busy, setBusy] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [devCode, setDevCode] = useState<string | null>(null);
+  const [channel, setChannel] = useState<"sms" | "telegram">("sms");
   const [captcha, setCaptcha] = useState<string>("");
   const onToken = useCallback((tk: string) => setCaptcha(tk), []);
 
@@ -47,13 +49,14 @@ export function OtpBlock({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone: value.phone, turnstileToken: captcha }),
       });
-      const json = (await res.json()) as { ok: boolean; error?: string; devCode?: string; retryAfterSec?: number };
+      const json = (await res.json()) as { ok: boolean; error?: string; devCode?: string; retryAfterSec?: number; channel?: "sms" | "telegram" };
       if (!json.ok) {
         onError(t.has(`errors.${json.error}`) ? t(`errors.${json.error}` as "errors.generic") : t("errors.generic"));
         if (json.retryAfterSec && json.retryAfterSec < 300) setCooldown(json.retryAfterSec);
         return;
       }
       setDevCode(json.devCode ?? null);
+      setChannel(json.channel ?? "sms");
       setCooldown(60);
       onChange({ ...value, sent: true, code: "" });
     } catch {
@@ -79,7 +82,9 @@ export function OtpBlock({
 
       {value.sent && (
         <div className="space-y-3">
-          <p className="text-sm text-slate-600">{t("codeSent", { phone: value.phone })}</p>
+          <p className="text-sm text-slate-600">
+            {channel === "telegram" ? t("codeSentTelegram", { bot: site.telegramBot }) : t("codeSent", { phone: value.phone })}
+          </p>
           {devCode && (
             <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800" data-testid="dev-code">
               {t("devCode", { code: devCode })}

@@ -1,3 +1,4 @@
+import { site } from "@/lib/site";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
@@ -39,7 +40,7 @@ export default async function LoginPage({ params, searchParams }: Props) {
   if (user && !(isLawyer && user.role === "CLIENT")) redirect(target);
 
   const t = await getTranslations("auth");
-  const telegramBot = process.env.TELEGRAM_BOT_TOKEN ? process.env.NEXT_PUBLIC_TELEGRAM_BOT : undefined;
+  const telegramBot = process.env.TELEGRAM_BOT_TOKEN ? site.telegramBot : undefined;
 
   return (
     <div className="mx-auto max-w-md px-4 py-12">

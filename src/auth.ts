@@ -81,6 +81,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const telegramId = String(data.id);
         const name = [data.first_name, data.last_name].filter(Boolean).join(" ") || data.username || null;
         let user = await prisma.user.findUnique({ where: { telegramId } });
+        // Administrator Telegram ID'si (ADMIN_TELEGRAM_ID yoki shaxsiy TELEGRAM_ADMIN_CHAT_ID) — admin hisobiga bogʻlanadi.
+        // SMS shlyuzi ulanmagan boʻlsa ham admin panelga kirish imkonini beradi; imzo bot tokeni bilan tekshirilgan.
+        const adminTg = process.env.ADMIN_TELEGRAM_ID || process.env.TELEGRAM_ADMIN_CHAT_ID;
+        if (adminTg && /^\d+$/.test(adminTg) && adminTg === telegramId && user?.role !== "ADMIN") {
+          const adminPhone = normalizePhone(process.env.ADMIN_PHONE ?? "");
+          const byPhone = adminPhone ? await prisma.user.findUnique({ where: { phone: adminPhone } }) : null;
+          const admin = byPhone?.role === "ADMIN" ? byPhone : await prisma.user.findFirst({ where: { role: "ADMIN" }, orderBy: { createdAt: "asc" } });
+          if (admin) {
+            const [, linked] = await prisma.$transaction([
+              prisma.user.updateMany({ where: { telegramId, id: { not: admin.id } }, data: { telegramId: null } }),
+              prisma.user.update({ where: { id: admin.id }, data: { telegramId } }),
+            ]);
+            user = linked;
+          }
+        }
         if (user?.isBlocked) throw new Blocked();
         user ??= await prisma.user.create({ data: { telegramId, name, role: "CLIENT" } });
         if (user.role === "LAWYER") await ensureLawyerProfile(user.id);
