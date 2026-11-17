@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { REGIONS, SPECIALIZATIONS } from "./data/regions";
 import { TOPICS, ARTICLES } from "./data/content";
 import { PAGES } from "./data/pages";
+import { SEO_ARTICLES } from "./data/articles";
 import { latinToCyrillic, slugify } from "../src/lib/translit";
 
 const prisma = new PrismaClient();
@@ -253,6 +254,11 @@ async function main() {
         publishedAt: new Date(Date.now() - (i + 1) * 5 * 86400000),
       },
     });
+  }
+
+  // SEO maqolalar — qoralama; mavjud boʻlsa tegilmaydi (admin tahriri va eʼlon holati saqlanadi)
+  for (const a of SEO_ARTICLES) {
+    await prisma.article.upsert({ where: { slug: a.slug }, update: {}, create: { ...a, published: false } });
   }
 
   // Maʼlumot sahifalari (admin panelda tahrirlanadi — mavjud boʻlsa tegilmaydi)
