@@ -132,6 +132,26 @@ async function getTopLawyersUncached({ limit = 5, from, regionId }: { limit?: nu
     .slice(0, limit);
 }
 
+/**
+ * Har bir viloyat va yoʻnalishdagi koʻrinadigan advokatlar soni (id → son).
+ * Boʻsh katalog sahifalari indekslanmaydi va sitemap'ga kirmaydi — Google ularni
+ * "yupqa"/soft 404 deb baholab, butun sayt sifatini pasaytirmasin.
+ */
+export const getCatalogCounts = cached("getCatalogCounts", getCatalogCountsUncached, 60);
+
+async function getCatalogCountsUncached() {
+  const visible = { status: "TASDIQLANGAN", user: { isBlocked: false } } satisfies Prisma.LawyerProfileWhereInput;
+  const [byRegion, bySpec] = await Promise.all([
+    prisma.lawyerProfile.groupBy({ by: ["regionId"], where: visible, _count: { _all: true } }),
+    prisma.lawyerSpecialization.groupBy({ by: ["specializationId"], where: { lawyer: visible }, _count: { _all: true } }),
+  ]);
+  const regions: Record<string, number> = {};
+  for (const r of byRegion) if (r.regionId) regions[r.regionId] = r._count._all;
+  const specs: Record<string, number> = {};
+  for (const s of bySpec) specs[s.specializationId] = s._count._all;
+  return { regions, specs };
+}
+
 export const getHomeStats = cached("getHomeStats", getHomeStatsUncached, 300);
 
 async function getHomeStatsUncached() {

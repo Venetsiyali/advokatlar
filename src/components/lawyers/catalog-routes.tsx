@@ -5,7 +5,7 @@ import { CatalogPageShell } from "@/components/lawyers/catalog-page";
 import { Link } from "@/i18n/navigation";
 import { lname } from "@/lib/localized";
 import { alternates } from "@/lib/seo";
-import { getRegions, getSpecializations, parseFilters } from "@/server/lawyers";
+import { getCatalogCounts, getRegions, getSpecializations, parseFilters } from "@/server/lawyers";
 
 // Katalog sahifalari ikki koʻrinishda ishlatiladi:
 //   • ochiq marshrut (/advokatlar, /advokatlar/[viloyat], /advokatlar/yonalish/[slug]) — filtrsiz, statik (ISR), tez;
@@ -14,8 +14,11 @@ import { getRegions, getSpecializations, parseFilters } from "@/server/lawyers";
 
 export type SP = Record<string, string | string[] | undefined>;
 
-/** Filtrlangan variantlar indekslanmaydi — kanonik (filtrsiz) sahifa yetarli */
-const robots = (filtered: boolean): Metadata["robots"] => (filtered ? { index: false, follow: true } : undefined);
+/**
+ * Filtrlangan variantlar indekslanmaydi — kanonik (filtrsiz) sahifa yetarli.
+ * Advokatsiz (boʻsh) viloyat/yoʻnalish sahifasi ham indekslanmaydi; havolalar boʻylab yurish (follow) saqlanadi.
+ */
+const robots = (filtered: boolean, empty = false): Metadata["robots"] => (filtered || empty ? { index: false, follow: true } : undefined);
 
 const chip = "rounded-full border border-navy-100 px-3 py-1.5 text-sm text-navy-700 hover:border-brand-500 hover:text-brand-700";
 
@@ -60,7 +63,7 @@ export async function regionMetadata(locale: string, slug: string, filtered: boo
     title: t("regionTitle", { region: name }),
     description: t("regionDescription", { region: name }),
     alternates: alternates(locale, `/advokatlar/${region.slug}`),
-    robots: robots(filtered),
+    robots: robots(filtered, !(await getCatalogCounts()).regions[region.id]),
   };
 }
 
@@ -108,7 +111,7 @@ export async function specMetadata(locale: string, slug: string, filtered: boole
     title: t("specTitle", { spec: name }),
     description: t("specDescription", { spec: name }),
     alternates: alternates(locale, `/advokatlar/yonalish/${spec.slug}`),
-    robots: robots(filtered),
+    robots: robots(filtered, !(await getCatalogCounts()).specs[spec.id]),
   };
 }
 

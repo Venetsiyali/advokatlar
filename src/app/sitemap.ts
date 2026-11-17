@@ -24,9 +24,11 @@ function localized(path: string, opts: { lastModified?: Date; changeFrequency?: 
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // Faqat advokati bor viloyat va yoʻnalishlar — boʻsh sahifalar noindex (catalog-routes.tsx)
+  const visible = { status: "TASDIQLANGAN", user: { isBlocked: false } } as const;
   const [regions, specs, lawyers, topics, articles] = await Promise.all([
-    prisma.region.findMany({ select: { slug: true } }),
-    prisma.specialization.findMany({ select: { slug: true } }),
+    prisma.region.findMany({ where: { lawyers: { some: visible } }, select: { slug: true } }),
+    prisma.specialization.findMany({ where: { lawyers: { some: { lawyer: visible } } }, select: { slug: true } }),
     prisma.lawyerProfile.findMany({
       where: { status: "TASDIQLANGAN", user: { isBlocked: false } },
       select: { slug: true, updatedAt: true },

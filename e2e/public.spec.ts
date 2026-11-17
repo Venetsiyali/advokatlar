@@ -79,6 +79,15 @@ test.describe("Ochiq sahifalar", () => {
     expect(xml).toContain("/advokatlar/toshkent-shahri");
     expect(xml).toContain('hreflang="ru"');
     expect(xml).not.toContain("/admin");
+    // Advokati yoʻq viloyat sitemap'da yoʻq (demo bazada Jizzaxda advokat yoʻq)
+    expect(xml).not.toContain("/advokatlar/jizzax");
+  });
+
+  test("boʻsh viloyat sahifasi indekslanmaydi, toʻlasi indekslanadi", async ({ page }) => {
+    await page.goto("/advokatlar/jizzax");
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
+    await page.goto("/advokatlar/toshkent-shahri");
+    await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
   });
 
   test("himoyalangan sahifalar: kabinet va admin kirishni talab qiladi", async ({ page }) => {
