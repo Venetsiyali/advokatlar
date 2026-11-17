@@ -9,6 +9,7 @@ import { latinToCyrillic, latinToCyrillicKeep, slugify } from "@/lib/translit";
 import { site } from "@/lib/site";
 import { audit, requireAdmin } from "./admin";
 import { revalidatePublic } from "./cache";
+import { pingArticle, pingLawyer, pingPage, pingTopic } from "./indexnow";
 import type { ActionResult } from "./cabinet-actions";
 import { adminAssign, adminCancel, adminRedispatch, recomputeLawyerRating } from "./matching";
 import { notifyLawyerModeration } from "./notify";
@@ -31,6 +32,7 @@ export async function approveLawyerAction(lawyerId: string): Promise<ActionResul
   await audit(admin.id, "lawyer.approve", "LawyerProfile", lawyerId, { from: l.status });
   await notifyLawyerModeration(lawyerId, "approved");
   revalidateAll();
+  pingLawyer(lawyerId);
   return { ok: true };
 }
 
@@ -47,6 +49,8 @@ export async function rejectLawyerAction(_prev: FormState, fd: FormData): Promis
   await audit(admin.id, "lawyer.reject", "LawyerProfile", lawyerId, { from: l.status, reason });
   await notifyLawyerModeration(lawyerId, "rejected", reason);
   revalidateAll();
+  // Avval ochiq boʻlgan profil yopildi — qidiruv tizimlari 404 ni tezroq koʻrsin
+  if (l.status === "TASDIQLANGAN") pingLawyer(lawyerId);
   return { status: "ok" };
 }
 
@@ -58,6 +62,7 @@ export async function blockLawyerAction(lawyerId: string): Promise<ActionResult>
   await audit(admin.id, "lawyer.block", "LawyerProfile", lawyerId, { from: l.status });
   await notifyLawyerModeration(lawyerId, "blocked");
   revalidateAll();
+  if (l.status === "TASDIQLANGAN") pingLawyer(lawyerId);
   return { ok: true };
 }
 
@@ -66,6 +71,7 @@ export async function setLicenseVerifiedAction(lawyerId: string, verified: boole
   await prisma.lawyerProfile.update({ where: { id: lawyerId }, data: { licenseVerified: verified } });
   await audit(admin.id, verified ? "lawyer.license_verify" : "lawyer.license_unverify", "LawyerProfile", lawyerId);
   revalidateAll();
+  pingLawyer(lawyerId);
   return { ok: true };
 }
 
@@ -148,6 +154,7 @@ export async function moderateReviewAction(reviewId: string, status: "TASDIQLANG
   await recomputeLawyerRating(r.lawyerId);
   await audit(admin.id, status === "TASDIQLANGAN" ? "review.approve" : "review.reject", "Review", reviewId, { from: r.status });
   revalidateAll();
+  pingLawyer(r.lawyerId);
   return { ok: true };
 }
 
@@ -222,6 +229,9 @@ export async function saveArticleAction(_prev: FormState, fd: FormData): Promise
     : await prisma.article.create({ data: { ...data, authorId: admin.id } });
   await audit(admin.id, existing ? "article.update" : "article.create", "Article", saved.id, { slug, published: d.published });
   revalidateAll();
+  // Eʼlon qilingan yoki eʼlondan olingan maqola; slug oʻzgargan boʻlsa — eski manzil ham
+  if (saved.published || existing?.published) pingArticle(saved.slug, saved.locale);
+  if (existing?.published && existing.slug !== saved.slug) pingArticle(existing.slug, existing.locale);
   return { status: "ok", id: saved.id };
 }
 
@@ -232,6 +242,7 @@ export async function deleteArticleAction(id: string): Promise<ActionResult> {
   await prisma.article.delete({ where: { id } });
   await audit(admin.id, "article.delete", "Article", id, { slug: a.slug, title: a.title });
   revalidateAll();
+  if (a.published) pingArticle(a.slug, a.locale);
   return { ok: true };
 }
 
@@ -289,6 +300,7 @@ export async function saveTopicAction(_prev: FormState, fd: FormData): Promise<F
   const saved = d.id ? await prisma.topicPage.update({ where: { id: d.id }, data }) : await prisma.topicPage.create({ data });
   await audit(admin.id, d.id ? "topic.update" : "topic.create", "TopicPage", saved.id, { slug: d.slug });
   revalidateAll();
+  if (saved.published || d.id) pingTopic(saved.slug);
   return { status: "ok", id: saved.id };
 }
 
@@ -299,6 +311,7 @@ export async function deleteTopicAction(id: string): Promise<ActionResult> {
   await prisma.topicPage.delete({ where: { id } });
   await audit(admin.id, "topic.delete", "TopicPage", id, { slug: tp.slug });
   revalidateAll();
+  if (tp.published) pingTopic(tp.slug);
   return { ok: true };
 }
 
@@ -334,6 +347,7 @@ export async function saveStaticPageAction(_prev: FormState, fd: FormData): Prom
   await prisma.staticPage.upsert({ where: { slug: d.slug }, update: data, create: { slug: d.slug, ...data } });
   await audit(admin.id, "page.update", "StaticPage", d.slug);
   revalidateAll();
+  pingPage(d.slug);
   return { status: "ok" };
 }
 

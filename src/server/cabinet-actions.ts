@@ -9,6 +9,7 @@ import { ALLOWED_DOC_TYPES, ALLOWED_IMAGE_TYPES, deleteFile, publicUrl, storeFil
 import { acceptAssignment, clientCancel, lawyerSetStatus, rejectAssignment } from "./matching";
 import { getCurrentUser } from "./session";
 import { revalidatePublic } from "./cache";
+import { pingLawyer } from "./indexnow";
 
 async function requireLawyer() {
   const user = await getCurrentUser();
@@ -140,6 +141,8 @@ export async function saveProfileAction(_prev: ProfileState, fd: FormData): Prom
     prisma.user.update({ where: { id: user.id }, data: { name: d.fullName } }),
   ]);
   revalidatePublic();
+  // Ochiq profil oʻzgardi (yoki litsenziya oʻzgarib, qayta tekshiruvga ketdi)
+  if (lawyer.status === "TASDIQLANGAN") pingLawyer(lawyer.id);
   return { status: "ok" };
 }
 
