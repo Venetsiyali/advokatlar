@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
 import { BadgeCheck, Briefcase, Building2, Clock, GraduationCap, Languages, Lock, MapPin, Wallet } from "lucide-react";
 import { Link } from "@/i18n/navigation";
+import { MotifArt } from "@/components/art/court-art";
 import { Avatar } from "@/components/lawyers/avatar";
 import { RatingStars } from "@/components/lawyers/rating-stars";
 import { Breadcrumbs } from "@/components/lawyers/catalog-view";
@@ -105,10 +106,15 @@ export default async function LawyerPage({ params }: Props) {
       <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_340px]">
         <div className="space-y-6">
           {/* Sarlavha kartochkasi */}
-          <Card className="p-6">
-            <div className="flex flex-col gap-5 sm:flex-row">
-              <Avatar name={l.fullName} src={l.avatarUrl} className="size-28 shrink-0 text-3xl" />
-              <div className="min-w-0">
+          <Card className="overflow-hidden">
+            {/* Rasmiy “muqova” chizigʻi: toʻq koʻk, ustun naqshi */}
+            <div className="relative isolate h-24 overflow-hidden bg-navy-900 sm:h-28" aria-hidden>
+              <div className="bg-columns absolute inset-0 -z-10" />
+              <MotifArt id="profile-cover" motif="scales" className="absolute -top-3 right-0 h-36 opacity-80 sm:right-8" />
+            </div>
+            <div className="relative -mt-14 flex flex-col gap-5 px-6 pb-6 sm:flex-row">
+              <Avatar name={l.fullName} src={l.avatarUrl} className="size-28 shrink-0 text-3xl shadow-lift ring-4 ring-white" />
+              <div className="min-w-0 sm:pt-16">
                 <h1 className="text-2xl font-extrabold leading-tight sm:text-3xl">{l.fullName}</h1>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {l.licenseVerified && (

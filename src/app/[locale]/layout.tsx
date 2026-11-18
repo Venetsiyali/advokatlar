@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Playfair_Display } from "next/font/google";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -14,6 +14,8 @@ import { alternates } from "@/lib/seo";
 import "../globals.css";
 
 const inter = Inter({ subsets: ["latin", "cyrillic"], variable: "--font-inter", display: "swap" });
+// Sarlavhalar uchun rasmiy serif (kirill ham bor); faqat kerakli qalinliklar — sahifa yengil qoladi
+const playfair = Playfair_Display({ subsets: ["latin", "cyrillic"], weight: ["700", "800"], variable: "--font-playfair", display: "swap" });
 
 // viewportFit: cover — iPhone pastki chizigʻi ostida ham fon; panellar env(safe-area-inset-bottom) bilan surilgan
 export const viewport: Viewport = { themeColor: "#102c4a", width: "device-width", initialScale: 1, viewportFit: "cover" };
@@ -55,7 +57,7 @@ export default async function LocaleLayout({
   const tc = await getTranslations("common");
 
   return (
-    <html lang={locale} className={inter.variable}>
+    <html lang={locale} className={`${inter.variable} ${playfair.variable}`}>
       <body className="flex min-h-screen flex-col font-sans">
         {/* Tarjimalar brauzerga faqat kerakli sahifalarda beriladi (ClientMessages) */}
         <NextIntlClientProvider messages={{}}>

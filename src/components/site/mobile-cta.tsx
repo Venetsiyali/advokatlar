@@ -36,7 +36,7 @@ export function MobileCta({ label }: { label: string }) {
       <Link
         href="/murojaat"
         tabIndex={shown ? 0 : -1}
-        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-600 text-base font-semibold text-white shadow-soft active:bg-brand-700"
+        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-brand-300 to-brand-500 text-base font-semibold text-navy-950 shadow-gold active:from-brand-400"
       >
         <MessageSquarePlus className="size-5" /> {label}
       </Link>

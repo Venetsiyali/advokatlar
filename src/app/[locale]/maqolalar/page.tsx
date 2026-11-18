@@ -8,6 +8,7 @@ import { readingMinutes } from "@/lib/sanitize";
 import { alternates } from "@/lib/seo";
 import { PageHeader } from "@/components/site/page-header";
 import { Pager } from "@/components/admin/ui";
+import { ArticleCover } from "@/components/art/court-art";
 
 /** Har soʻrovda (sessiya yoki URL parametrlari) — build vaqtida generatsiya qilinmaydi */
 export const dynamic = "force-dynamic";
@@ -47,7 +48,7 @@ export default async function ArticlesPage({ params, searchParams }: { params: P
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={a.coverUrl} alt="" className="aspect-[16/9] w-full object-cover" loading="lazy" />
                 ) : (
-                  <div className="aspect-[16/9] w-full bg-gradient-to-br from-navy-800 to-brand-700" aria-hidden />
+                  <ArticleCover seed={a.slug} className="aspect-[16/9] w-full" />
                 )}
                 <div className="flex flex-1 flex-col p-5">
                   <div className="flex items-center gap-3 text-xs text-slate-500">

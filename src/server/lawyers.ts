@@ -133,6 +133,22 @@ async function getTopLawyersUncached({ limit = 5, from, regionId }: { limit?: nu
 }
 
 /**
+ * Bosh sahifa uchun tasdiqlangan advokatlar (reyting yetarli boʻlmaganda toʻldirish):
+ * avval baholanganlar, keyin tajribasi koʻproqlari.
+ */
+export const getFeaturedLawyers = cached(
+  "getFeaturedLawyers",
+  (limit: number) =>
+    prisma.lawyerProfile.findMany({
+      where: { status: "TASDIQLANGAN", user: { isBlocked: false } },
+      include: lawyerCardInclude,
+      orderBy: [{ rating: "desc" }, { reviewCount: "desc" }, { experienceYears: "desc" }],
+      take: limit,
+    }),
+  300,
+);
+
+/**
  * Har bir viloyat va yoʻnalishdagi koʻrinadigan advokatlar soni (id → son).
  * Boʻsh katalog sahifalari indekslanmaydi va sitemap'ga kirmaydi — Google ularni
  * "yupqa"/soft 404 deb baholab, butun sayt sifatini pasaytirmasin.

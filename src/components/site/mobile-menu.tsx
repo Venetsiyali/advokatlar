@@ -29,14 +29,14 @@ export function MobileMenu({
         {open ? <X className="size-6" /> : <Menu className="size-6" />}
       </button>
       {open && (
-        <div className="absolute inset-x-0 top-full border-b border-navy-100 bg-white px-4 pb-5 pt-2 shadow-lift">
+        <div className="animate-[fade-up_0.25s_cubic-bezier(0.22,1,0.36,1)_both] absolute inset-x-0 top-full max-h-[calc(100dvh-4.5rem)] overflow-y-auto border-b border-navy-100 bg-white px-4 pb-5 pt-2 shadow-lift">
           <nav className="flex flex-col">
             {items.map((it) => (
               <Link
                 key={it.href}
                 href={it.href}
                 onClick={() => setOpen(false)}
-                className="rounded-lg px-3 py-3 text-base font-medium text-navy-800 hover:bg-navy-50"
+                className="rounded-lg border-l-2 border-transparent px-3 py-3 text-base font-medium text-navy-800 hover:border-brand-500 hover:bg-navy-50 active:bg-navy-50"
               >
                 {it.label}
               </Link>

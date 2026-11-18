@@ -20,12 +20,14 @@ export async function Footer() {
   ];
 
   return (
-    <footer className="mt-20 bg-navy-900 text-navy-100">
+    <footer className="relative isolate mt-20 bg-navy-950 text-navy-100">
+      <div className="bg-columns absolute inset-0 -z-10 opacity-70" aria-hidden />
+      <div className="h-0.5 bg-gradient-to-r from-transparent via-brand-500 to-transparent" aria-hidden />
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <div className="flex items-center gap-2">
             <LogoMark />
-            <span className="text-lg font-extrabold text-white">{site.brand}</span>
+            <span className="font-display text-xl font-extrabold text-white">{site.brand}</span>
           </div>
           <p className="mt-4 text-sm leading-relaxed text-navy-200">{t("tagline")}</p>
           <div className="mt-5 flex gap-3">
@@ -34,7 +36,7 @@ export async function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={t("telegramBot")}
-              className="flex size-10 items-center justify-center rounded-xl bg-white/10 hover:bg-white/20"
+              className="flex size-10 items-center justify-center rounded-xl bg-white/10 transition-colors hover:bg-brand-500 hover:text-navy-950"
             >
               <Send className="size-4" />
             </a>
@@ -102,7 +104,7 @@ export async function Footer() {
 function FooterCol({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h3 className="text-sm font-semibold uppercase tracking-wide text-white">{title}</h3>
+      <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-brand-300">{title}</h3>
       <div className="mt-4 flex flex-col gap-2.5">{children}</div>
     </div>
   );

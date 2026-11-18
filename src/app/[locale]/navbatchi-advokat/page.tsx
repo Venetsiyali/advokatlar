@@ -47,7 +47,7 @@ export default async function DutyPage({ params, searchParams }: Props) {
           <Link href={requestHref} className={buttonVariants({ size: "lg" })}>
             <Zap /> {t("cta")}
           </Link>
-          <span className="text-sm font-medium text-slate-500">{t("count", { count: lawyers.length })}</span>
+          <span className="text-sm font-medium text-navy-200">{t("count", { count: lawyers.length })}</span>
         </div>
       </PageHeader>
 

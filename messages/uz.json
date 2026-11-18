@@ -88,11 +88,16 @@
     "privacyText": "Telefon raqamingiz ommaga koʻrsatilmaydi — u faqat murojaatingizni qabul qilgan advokatga ochiladi."
   },
   "top": {
-    "title": "Oyning TOP-5 advokati",
-    "subtitle": "Mijozlar bahosi va faollik asosida",
+    "title": "Reytingi eng yuqori advokatlar",
+    "subtitle": "Mijozlar bahosi va faollik asosida — har oy yangilanadi",
     "place": "{place}-oʻrin",
     "seeAll": "Toʻliq reyting",
-    "empty": "Hozircha reyting shakllanmagan."
+    "empty": "Hozircha reyting shakllanmagan.",
+    "titleFeatured": "Tasdiqlangan advokatlar",
+    "subtitleFeatured": "Litsenziyasi va hujjatlari tekshirilgan mutaxassislar",
+    "emptyTitle": "Birinchi advokatlar tekshiruvdan oʻtmoqda",
+    "emptyText": "Litsenziyasi tasdiqlangan advokatlar shu yerda reyting boʻyicha chiqadi. Advokat boʻlsangiz — birinchilardan boʻlib qoʻshiling.",
+    "medal": "{place}-oʻrin"
   },
   "services": {
     "title": "Qaysi masalada yordam kerak?",
@@ -902,5 +907,10 @@
     "profileInCatalog": "Katalogda profil va SEO sahifa",
     "telegramAlerts": "Telegram orqali tezkor bildirishnomalar",
     "ratingParticipation": "Reyting va izohlarda ishtirok"
+  },
+  "homeArticles": {
+    "title": "Foydali huquqiy maqolalar",
+    "subtitle": "Oddiy tilda: ajrashish, qarz, mehnat, meros va boshqa mavzular",
+    "all": "Barcha maqolalar"
   }
 }

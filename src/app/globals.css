@@ -2,27 +2,71 @@
 
 @theme {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  /* Rasmiy, “sud” uslubidagi sarlavhalar uchun serif shrift */
+  --font-display: var(--font-playfair), Georgia, "Times New Roman", serif;
 
   --color-navy-50: #eef3f9;
   --color-navy-100: #d6e2f0;
   --color-navy-200: #aec4df;
+  --color-navy-300: #7f9fc6;
+  --color-navy-400: #4f78a8;
   --color-navy-500: #2b5b8f;
   --color-navy-600: #1d4774;
   --color-navy-700: #163a60;
   --color-navy-800: #102c4a;
   --color-navy-900: #0b1f36;
+  --color-navy-950: #061424;
 
-  --color-brand-50: #ebf8f2;
-  --color-brand-100: #cdeedd;
-  --color-brand-500: #12a06c;
-  --color-brand-600: #0c8a5c;
-  --color-brand-700: #0a714c;
+  /* Asosiy urgʻu — sud ramzlari rangi: oltin/bronza (matn uchun 600+ — WCAG AA kontrast) */
+  --color-brand-50: #fbf7ec;
+  --color-brand-100: #f4e8c8;
+  --color-brand-200: #e9d39a;
+  --color-brand-300: #e2c376;
+  --color-brand-400: #d6b25c;
+  --color-brand-500: #c49a3c;
+  --color-brand-600: #8f6a1c;
+  --color-brand-700: #7a5a14;
+  --color-brand-800: #5e4510;
 
-  --color-gold-400: #f5b83d;
-  --color-gold-500: #e9a21b;
+  --color-gold-300: #f0d48c;
+  --color-gold-400: #e9b949;
+  --color-gold-500: #d9a12c;
 
   --shadow-soft: 0 1px 2px rgb(16 44 74 / 0.04), 0 8px 24px -8px rgb(16 44 74 / 0.10);
-  --shadow-lift: 0 2px 4px rgb(16 44 74 / 0.05), 0 16px 40px -12px rgb(16 44 74 / 0.18);
+  --shadow-lift: 0 2px 4px rgb(16 44 74 / 0.05), 0 18px 44px -14px rgb(16 44 74 / 0.24);
+  --shadow-gold: 0 10px 30px -10px rgb(196 154 60 / 0.55);
+
+  --animate-fade-up: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-fade-in: fade-in 0.9s ease-out both;
+  --animate-float: float 7s ease-in-out infinite;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(18px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
 }
 
 :root {
@@ -38,6 +82,13 @@ body {
   /* Matn hajmi telefonni burganda oʻz-oʻzidan kattalashmasin */
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+}
+
+/* Sarlavhalar — rasmiy serif shrift (lotin, kirill va oʻ/gʻ belgilari bilan) */
+h1,
+h2 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
 }
 
 /* Tugma va havolalarda ikki marta bosib kattalashtirish kechikishi yoʻq */
@@ -61,9 +112,142 @@ html {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ——— Animatsiyalar ———
+ * Hammasi faqat transform/opacity (telefonda ham silliq), "kamroq harakat" sozlamasida oʻchadi (yuqorida).
+ * Aylantirganda paydo boʻlish — CSS scroll-driven animation: JS kerak emas; qoʻllab-quvvatlamaydigan
+ * brauzerlarda kontent shunchaki darhol koʻrinadi (hech narsa yashirinib qolmaydi).
+ */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      animation: reveal-up linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 40%;
+    }
+  }
+}
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Sud tarozisi sekin tebranadi, bolg'acha vaqti-vaqti bilan uriladi (SVG koordinatalarida) */
+.art-sway {
+  transform-box: view-box;
+  animation: sway 6s ease-in-out infinite;
+}
+@keyframes sway {
+  0%,
+  100% {
+    transform: rotate(-2.5deg);
+  }
+  50% {
+    transform: rotate(2.5deg);
+  }
+}
+.art-counter-sway {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+  animation: counter-sway 6s ease-in-out infinite;
+}
+@keyframes counter-sway {
+  0%,
+  100% {
+    transform: rotate(2.5deg);
+  }
+  50% {
+    transform: rotate(-2.5deg);
+  }
+}
+.art-gavel {
+  transform-box: view-box;
+  animation: gavel 5s cubic-bezier(0.5, 0, 0.3, 1) infinite;
+}
+@keyframes gavel {
+  0%,
+  70%,
+  100% {
+    transform: rotate(0);
+  }
+  80% {
+    transform: rotate(-14deg);
+  }
+  86% {
+    transform: rotate(3deg);
+  }
+  90% {
+    transform: rotate(0);
+  }
+}
+.art-glow {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: glow 6s ease-in-out infinite;
+}
+@keyframes glow {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.06);
+  }
+}
+.art-spark {
+  transform-box: fill-box;
+  animation: spark 9s linear infinite;
+}
+@keyframes spark {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-140px);
+  }
+}
+
+/* Oltin yaltirash (sarlavhadagi urgʻu so'z) */
+.text-gold-shine {
+  background: linear-gradient(100deg, #c49a3c 0%, #f0d48c 30%, #d6b25c 50%, #f6e3ae 65%, #c49a3c 100%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shine 7s ease-in-out infinite;
+}
+@keyframes shine {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Sud binosi ustunlari motivi (fon naqshi) */
+.bg-columns {
+  background-image: repeating-linear-gradient(90deg, rgb(255 255 255 / 0.035) 0 1px, transparent 1px 72px),
+    radial-gradient(ellipse 80% 60% at 70% 0%, rgb(196 154 60 / 0.18), transparent 70%);
 }
 
 .prose-content h2 {

@@ -1,8 +1,13 @@
 import { getTranslations } from "next-intl/server";
 import { Breadcrumbs } from "@/components/lawyers/catalog-view";
 import { jsonLd, localeUrl } from "@/lib/seo";
+import { MotifArt, motifFor } from "@/components/art/court-art";
 
-/** Ochiq sahifalar uchun: breadcrumb (+ JSON-LD), sarlavha va kirish matni */
+/**
+ * Ochiq sahifalar uchun: breadcrumb (+ JSON-LD), sarlavha va kirish matni.
+ * `banner` (standart) — toʻq koʻk rasmiy panel, ustun naqshi va sud predmeti rasmi bilan;
+ * `plain` — maqolalar kabi oʻzining muqovasi bor sahifalar uchun.
+ */
 export async function PageHeader({
   locale,
   path,
@@ -10,7 +15,9 @@ export async function PageHeader({
   lead,
   crumbs = [],
   children,
+  variant = "banner",
 }: {
+  variant?: "banner" | "plain";
   locale: string;
   path: string;
   title: string;
@@ -21,7 +28,11 @@ export async function PageHeader({
   const tc = await getTranslations("common");
   const all = [{ href: "/", label: tc("home") }, ...crumbs, { label: title }];
   return (
-    <header>
+    <header
+      className={
+        variant === "banner" ? "relative isolate overflow-hidden rounded-3xl bg-navy-900 px-5 py-7 text-white shadow-lift sm:px-10 sm:py-10" : undefined
+      }
+    >
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLd({
@@ -35,9 +46,31 @@ export async function PageHeader({
           })),
         })}
       />
-      <Breadcrumbs items={all} />
-      <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-navy-900 md:text-4xl">{title}</h1>
-      {lead && <p className="mt-3 max-w-3xl text-lg leading-relaxed text-slate-600">{lead}</p>}
+      {variant === "banner" && (
+        <>
+          <div className="bg-columns absolute inset-0 -z-10" aria-hidden />
+          <MotifArt
+            id={`ph${path.replace(/[^a-z0-9]/gi, "-")}`}
+            motif={motifFor(path)}
+            className="pointer-events-none absolute -right-16 top-1/2 -z-10 h-[130%] max-h-72 -translate-y-1/2 opacity-25 sm:-right-6 md:opacity-90"
+          />
+        </>
+      )}
+      <Breadcrumbs items={all} dark={variant === "banner"} />
+      <h1
+        className={
+          variant === "banner"
+            ? "animate-fade-up mt-3 max-w-3xl text-3xl font-extrabold text-white md:text-[2.6rem] md:leading-tight"
+            : "mt-3 text-3xl font-extrabold text-navy-900 md:text-4xl"
+        }
+      >
+        {title}
+      </h1>
+      {lead && (
+        <p className={variant === "banner" ? "mt-3 max-w-2xl text-base leading-relaxed text-navy-100 sm:text-lg" : "mt-3 max-w-3xl text-lg leading-relaxed text-slate-600"}>
+          {lead}
+        </p>
+      )}
       {children}
     </header>
   );

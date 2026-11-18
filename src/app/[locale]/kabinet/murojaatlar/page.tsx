@@ -81,7 +81,7 @@ export default async function LawyerRequests({
             )}
           >
             {labels[k]}
-            {k === "yangi" && newCount > 0 && <span className="ml-2 rounded-full bg-brand-500 px-1.5 text-xs text-white">{newCount}</span>}
+            {k === "yangi" && newCount > 0 && <span className="ml-2 rounded-full bg-brand-500 px-1.5 text-xs font-semibold text-navy-950">{newCount}</span>}
           </Link>
         ))}
       </div>

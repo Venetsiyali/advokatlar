@@ -18,14 +18,16 @@ export async function Header() {
     { href: "/narxlar", label: t("pricing") },
   ];
   return (
-    <header className="sticky top-0 z-40 border-b border-navy-100/70 bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-navy-100/70 bg-white/90 backdrop-blur-md">
+      {/* Yuqoridagi ingichka oltin chiziq — rasmiy uslub urgʻusi */}
+      <div className="h-0.5 bg-gradient-to-r from-navy-900 via-brand-500 to-navy-900" aria-hidden />
       <div className="relative mx-auto flex h-16 max-w-6xl items-center justify-between gap-1.5 px-3 sm:gap-4 sm:px-4">
         <Link href="/" aria-label="Bosh sahifa">
           <Logo />
         </Link>
         <nav className="hidden items-center gap-0.5 lg:flex">
           {items.map((it) => (
-            <Link key={it.href} href={it.href} className="rounded-lg px-2.5 py-2 text-sm font-medium text-navy-700 hover:bg-navy-50 hover:text-navy-900">
+            <Link key={it.href} href={it.href} className="relative rounded-lg px-2.5 py-2 text-sm font-medium text-navy-700 transition-colors after:absolute after:inset-x-2.5 after:bottom-1 after:h-0.5 after:origin-left after:scale-x-0 after:rounded after:bg-brand-500 after:transition-transform after:duration-300 hover:text-navy-900 hover:after:scale-x-100">
               {it.label}
             </Link>
           ))}

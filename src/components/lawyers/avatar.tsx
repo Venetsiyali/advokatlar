@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { cn } from "@/lib/utils";
 
-const PALETTE = ["bg-navy-600", "bg-brand-600", "bg-navy-500", "bg-brand-700", "bg-navy-700"];
+const PALETTE = ["bg-navy-600", "bg-navy-800", "bg-navy-500", "bg-brand-700", "bg-navy-700"];
 
 export function Avatar({ name, src, className }: { name: string; src?: string | null; className?: string }) {
   const parts = name.split(" ");

@@ -22,12 +22,12 @@ export default async function OgImage() {
           flexDirection: "column",
           justifyContent: "space-between",
           padding: 72,
-          background: "linear-gradient(135deg, #0b1f36 0%, #102c4a 55%, #0f5d4a 100%)",
+          background: "linear-gradient(135deg, #061424 0%, #102c4a 60%, #3a2f17 100%)",
           color: "white",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-          <div style={{ width: 88, height: 88, borderRadius: 24, background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 52 }}>
+          <div style={{ width: 88, height: 88, borderRadius: 24, background: "linear-gradient(180deg, #e2c376, #c49a3c)", color: "#0b1f36", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 52 }}>
             ⚖
           </div>
           <div style={{ fontSize: 56, fontWeight: 800 }}>{site.brand}</div>
@@ -36,7 +36,7 @@ export default async function OgImage() {
           <div style={{ fontSize: 64, fontWeight: 800, lineHeight: 1.1 }}>{t("title")}</div>
           <div style={{ fontSize: 32, color: "#b8c7da" }}>{t("subtitle")}</div>
         </div>
-        <div style={{ fontSize: 28, color: "#86efac" }}>{domain}</div>
+        <div style={{ fontSize: 28, color: "#e2c376" }}>{domain}</div>
       </div>
     ),
     size,

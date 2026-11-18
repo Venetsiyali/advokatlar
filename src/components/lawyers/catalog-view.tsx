@@ -128,19 +128,19 @@ export async function CatalogView({
   );
 }
 
-export function Breadcrumbs({ items }: { items: { href?: string; label: string }[] }) {
+export function Breadcrumbs({ items, dark }: { items: { href?: string; label: string }[]; dark?: boolean }) {
   return (
-    <nav aria-label="Breadcrumb" className="text-sm text-slate-500">
+    <nav aria-label="Breadcrumb" className={cn("text-sm", dark ? "text-navy-200" : "text-slate-500")}>
       <ol className="flex flex-wrap items-center gap-1.5">
         {items.map((it, i) => (
           <li key={i} className="flex items-center gap-1.5">
             {i > 0 && <span aria-hidden>/</span>}
             {it.href ? (
-              <Link href={it.href} className="hover:text-navy-900">
+              <Link href={it.href} className={dark ? "hover:text-white" : "hover:text-navy-900"}>
                 {it.label}
               </Link>
             ) : (
-              <span className="text-navy-900">{it.label}</span>
+              <span className={dark ? "text-brand-200" : "text-navy-900"}>{it.label}</span>
             )}
           </li>
         ))}

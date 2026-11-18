@@ -1,5 +1,5 @@
 import { getLocale, getTranslations } from "next-intl/server";
-import { BadgeCheck, Briefcase, ChevronRight, Languages, MapPin } from "lucide-react";
+import { Award, BadgeCheck, Briefcase, ChevronRight, Languages, MapPin } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,24 +10,53 @@ import { lname } from "@/lib/localized";
 import { cn } from "@/lib/utils";
 import type { LawyerCardData } from "@/server/lawyers";
 
+/** Reytingdagi oʻrin medali: oltin, kumush, bronza; qolganlari — toʻq koʻk */
+const MEDAL: Record<number, string> = {
+  1: "from-gold-300 to-gold-500 text-navy-950",
+  2: "from-slate-100 to-slate-300 text-navy-900",
+  3: "from-[#f0c29b] to-[#b8743f] text-navy-950",
+};
+
 /**
  * Advokat kartasi (mobile-first): telefonda ixcham — butun karta bosiladi, alohida tugmasiz;
  * katta ekranlarda toʻliq maʼlumot va “Profilni koʻrish” tugmasi.
  */
-export async function LawyerCard({ lawyer, place, className }: { lawyer: LawyerCardData; place?: number; className?: string }) {
+export async function LawyerCard({
+  lawyer,
+  place,
+  stacked,
+  className,
+}: {
+  lawyer: LawyerCardData;
+  place?: number;
+  /** Tor ustunlar (bosh sahifadagi 5 talik reyting) uchun: katta ekranda rasm ism ustida */
+  stacked?: boolean;
+  className?: string;
+}) {
   const [t, tl, locale] = await Promise.all([getTranslations("common"), getTranslations("lang"), getLocale()]);
   const specs = lawyer.specializations.map((s) => s.specialization);
   const placeName = [lname(lawyer.region, locale), lawyer.district && lname(lawyer.district, locale)].filter(Boolean).join(", ");
 
   return (
-    <Card className={cn("group relative flex h-full flex-col p-4 transition-shadow active:bg-navy-50/50 sm:p-5 sm:hover:shadow-lift", className)}>
+    <Card
+      className={cn(
+        "group relative flex h-full flex-col p-4 transition duration-300 active:bg-navy-50/50 sm:p-5 sm:hover:-translate-y-1 sm:hover:border-brand-200 sm:hover:shadow-lift",
+        place === 1 && "border-brand-300 bg-gradient-to-b from-brand-50 to-white ring-1 ring-brand-200",
+        className,
+      )}
+    >
       {place && (
-        <span className="absolute -top-2.5 left-4 rounded-full bg-gold-500 px-2.5 py-0.5 text-xs font-bold text-white shadow-soft sm:-top-3 sm:left-5 sm:px-3 sm:py-1">
-          #{place}
+        <span
+          className={cn(
+            "absolute -top-3 left-4 inline-flex items-center gap-1 rounded-full bg-gradient-to-b px-2.5 py-1 text-xs font-bold shadow-soft ring-2 ring-white sm:left-5",
+            MEDAL[place] ?? "from-navy-700 to-navy-900 text-white",
+          )}
+        >
+          <Award className="size-3.5" aria-hidden /> #{place}
         </span>
       )}
-      <div className="flex gap-3 sm:gap-4">
-        <Avatar name={lawyer.fullName} src={lawyer.avatarUrl} className="size-14 shrink-0 text-lg sm:size-16 sm:text-xl" />
+      <div className={cn("flex gap-3 sm:gap-4", stacked && "sm:mt-1 sm:flex-col sm:gap-3")}>
+        <Avatar name={lawyer.fullName} src={lawyer.avatarUrl} className="size-14 shrink-0 text-lg shadow-soft ring-2 ring-white sm:size-16 sm:text-xl" />
         <div className="min-w-0 flex-1">
           <h3 className="font-bold leading-snug text-navy-900">
             {/* after:inset-0 — butun karta bosiladigan maydon (telefonda katta nishon) */}
@@ -36,7 +65,7 @@ export async function LawyerCard({ lawyer, place, className }: { lawyer: LawyerC
             </Link>
           </h3>
           <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-            <span className="flex items-center gap-1.5">
+            <span className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
               <RatingStars value={lawyer.rating} />
               <span className="font-semibold text-navy-900">{lawyer.rating > 0 ? lawyer.rating.toFixed(1) : "—"}</span>
               <span className="whitespace-nowrap text-slate-500">({t("reviews", { count: lawyer.reviewCount })})</span>

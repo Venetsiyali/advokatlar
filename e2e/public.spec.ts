@@ -105,7 +105,8 @@ test("mobil menyu @mobile", async ({ page }) => {
   const toggle = page.getByRole("button", { name: "Menyu" });
   await expect(toggle).toBeVisible();
   await toggle.click();
-  await page.getByRole("link", { name: "Narxlar" }).last().click();
+  // Menyudagi havola (sarlavha ichida; footer'dagi xuddi shu havola ochiq menyu ostida qoladi)
+  await page.getByRole("banner").getByRole("link", { name: "Narxlar" }).last().click();
   await expect(page).toHaveURL(/\/narxlar$/);
   // Gorizontal aylantirish yoʻq
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);

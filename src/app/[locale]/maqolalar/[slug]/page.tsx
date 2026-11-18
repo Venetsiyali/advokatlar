@@ -12,6 +12,7 @@ import { site } from "@/lib/site";
 import { buttonVariants } from "@/components/ui/button";
 import { CtaBox, PageHeader } from "@/components/site/page-header";
 import { articleParams } from "@/server/static-params";
+import { ArticleCover } from "@/components/art/court-art";
 
 /** ISR: sahifa keshlanadi; admin tahriri revalidatePath orqali darhol yangilaydi */
 export const revalidate = 3600;
@@ -93,7 +94,7 @@ export default async function ArticlePage({ params }: Props) {
           publisher: { "@type": "Organization", name: site.brand, url: site.url },
         })}
       />
-      <PageHeader locale={locale} path={`/maqolalar/${a.slug}`} title={txt.title} crumbs={[{ href: "/maqolalar", label: t("title") }]}>
+      <PageHeader variant="plain" locale={locale} path={`/maqolalar/${a.slug}`} title={txt.title} crumbs={[{ href: "/maqolalar", label: t("title") }]}>
         <div className="mt-4 flex items-center gap-4 text-sm text-slate-500">
           {a.publishedAt && <time dateTime={a.publishedAt.toISOString()}>{format.dateTime(a.publishedAt, { dateStyle: "long" })}</time>}
           <span className="inline-flex items-center gap-1">
@@ -102,9 +103,11 @@ export default async function ArticlePage({ params }: Props) {
         </div>
       </PageHeader>
 
-      {a.coverUrl && (
+      {a.coverUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={a.coverUrl} alt="" className="mt-6 aspect-[16/9] w-full rounded-2xl object-cover" />
+      ) : (
+        <ArticleCover seed={a.slug} className="mt-6 aspect-[21/9] w-full rounded-2xl" />
       )}
       {txt.excerpt && <p className="mt-6 text-lg font-medium leading-relaxed text-navy-800">{txt.excerpt}</p>}
       {/* Kontent admin tomonidan saqlanganda sanitize-html bilan tozalangan */}
