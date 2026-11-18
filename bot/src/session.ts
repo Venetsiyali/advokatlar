@@ -20,6 +20,9 @@ export type SessionData = {
   draft: Draft;
   /** Dialog eskirishi uchun (24 soat) */
   startedAt?: number;
+  /** Saytdagi telefon tasdigʻi (Telegram orqali): /start v_<token> dan keyin kontakt kutiladi */
+  verifyToken?: string;
+  verifyAt?: number;
 };
 
 export const initialSession = (): SessionData => ({ draft: {} });

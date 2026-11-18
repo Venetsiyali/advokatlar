@@ -36,6 +36,7 @@ export default defineConfig({
         url: `${baseURL}/api/health`,
         reuseExistingServer: false,
         timeout: 120_000,
-        env: { PORT: String(PORT), OTP_DEV_ECHO: "1", ENABLE_INTERNAL_CRON: "0", COLD_CACHE: "1" },
+        // TELEGRAM_VERIFY_FORCE — tokensiz ham "Telegram orqali tasdiqlash" tugmasi chiqadi (bot tomoni: npm run bot:simulate)
+        env: { PORT: String(PORT), OTP_DEV_ECHO: "1", ENABLE_INTERNAL_CRON: "0", COLD_CACHE: "1", TELEGRAM_VERIFY_FORCE: "1" },
       },
 });

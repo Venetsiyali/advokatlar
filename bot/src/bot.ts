@@ -7,6 +7,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { site } from "@/lib/site";
 import { acceptAssignment, lawyerSetStatus, rejectAssignment } from "@/server/matching";
 import { createRequestRecord, validateRefs } from "@/server/requests";
+import { confirmTelegramVerification, startTelegramVerification } from "@/lib/tg-verify";
 import { acceptedCard, newRequestCard } from "@/server/telegram-ui";
 import { PrismaSessionStorage, initialSession, type SessionData } from "./session";
 
@@ -15,6 +16,7 @@ export type BotContext = Context & SessionFlavor<SessionData>;
 const LOCALES: AppLocale[] = ["uz", "uz-Cyrl", "ru"];
 const LOCALE_LABEL: Record<AppLocale, string> = { uz: "🇺🇿 Oʻzbekcha", "uz-Cyrl": "🇺🇿 Ўзбекча", ru: "🇷🇺 Русский" };
 const DIALOG_TTL = 24 * 3600_000;
+const VERIFY_TTL = 15 * 60_000;
 
 type InlineRows = InlineKeyboardButton[][];
 const chunk = <T,>(arr: T[], n: number) => Array.from({ length: Math.ceil(arr.length / n) }, (_, i) => arr.slice(i * n, i * n + n));
@@ -66,6 +68,7 @@ export function createBot(token: string, opts: { botInfo?: UserFromGetMe } = {})
   bot.command("start", async (ctx) => {
     const payload = ctx.match?.trim() ?? "";
     if (payload.startsWith("link_")) return linkLawyer(ctx, payload.slice(5));
+    if (payload.startsWith("v_")) return startVerify(ctx, payload.slice(2));
     if (payload === "sorov") return startDialog(ctx);
     await mainMenu(ctx);
   });
@@ -190,9 +193,37 @@ export function createBot(token: string, opts: { botInfo?: UserFromGetMe } = {})
     await cancelDialog(ctx);
   });
 
-  bot.on("message:contact", async (ctx) => {
-    if (!(await expectStep(ctx, "phone"))) return;
+  // ---------- Saytdagi telefon tasdigʻi (SMS oʻrniga) ----------
+
+  const verifyPending = (ctx: BotContext) =>
+    Boolean(ctx.session.verifyToken && ctx.session.verifyAt && Date.now() - ctx.session.verifyAt < VERIFY_TTL);
+
+  async function startVerify(ctx: BotContext, token: string) {
     const t = await tr(ctx);
+    if (!ctx.from) return;
+    const res = await startTelegramVerification(token, String(ctx.from.id));
+    if (res === "invalid") return html(ctx, t("verifyInvalid"));
+    if (res === "done") return html(ctx, t("verifyOk"));
+    ctx.session.verifyToken = token;
+    ctx.session.verifyAt = Date.now();
+    await html(ctx, t("verifyAsk"), {
+      reply_markup: new Keyboard().requestContact(t.plain("phoneButton")).resized().oneTime(),
+    });
+  }
+
+  bot.on("message:contact", async (ctx) => {
+    const t = await tr(ctx);
+    if (verifyPending(ctx)) {
+      // Faqat oʻz raqami — Telegram uni tasdiqlagan boʻladi
+      if (ctx.message.contact.user_id !== ctx.from.id) return html(ctx, t("phoneNotOwn"));
+      if (!normalizePhone(ctx.message.contact.phone_number)) return html(ctx, t("phoneInvalid"));
+      const token = ctx.session.verifyToken!;
+      ctx.session.verifyToken = undefined;
+      ctx.session.verifyAt = undefined;
+      const ok = await confirmTelegramVerification(token, String(ctx.from.id), ctx.message.contact.phone_number);
+      return html(ctx, t(ok ? "verifyOk" : "verifyExpired"), { reply_markup: { remove_keyboard: true } });
+    }
+    if (!(await expectStep(ctx, "phone"))) return;
     // Faqat oʻz raqami — Telegram uni tasdiqlagan boʻladi (SMS OTP oʻrniga)
     if (ctx.message.contact.user_id !== ctx.from.id) return html(ctx, t("phoneNotOwn"));
     const phone = normalizePhone(ctx.message.contact.phone_number);
@@ -288,6 +319,7 @@ export function createBot(token: string, opts: { botInfo?: UserFromGetMe } = {})
     const t = await tr(ctx);
     const text = ctx.message.text.trim();
     if (menuTexts("cancel").includes(text)) return cancelDialog(ctx);
+    if (verifyPending(ctx)) return html(ctx, t("phoneUseButton"));
     const step = ctx.session.step;
 
     if (step === "name") {

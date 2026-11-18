@@ -1,4 +1,4 @@
-import { site } from "@/lib/site";
+import { phoneChannels } from "@/lib/tg-verify";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
@@ -40,16 +40,16 @@ export default async function LoginPage({ params, searchParams }: Props) {
   if (user && !(isLawyer && user.role === "CLIENT")) redirect(target);
 
   const t = await getTranslations("auth");
-  const telegramBot = process.env.TELEGRAM_BOT_TOKEN ? site.telegramBot : undefined;
+  const channels = phoneChannels();
 
   return (
     <div className="mx-auto max-w-md px-4 py-12">
       <Card className="p-6 sm:p-8">
         <h1 className="text-2xl font-extrabold">{isLawyer ? t("lawyerTitle") : t("title")}</h1>
-        <p className="mt-2 text-sm text-slate-600">{isLawyer ? t("lawyerSubtitle") : t("subtitle")}</p>
+        <p className="mt-2 text-sm text-slate-600">{isLawyer ? t("lawyerSubtitle") : t(channels.sms ? "subtitle" : "subtitleTelegram")}</p>
         <div className="mt-6">
           <ClientMessages ns={["auth"]}>
-            <LoginForm role={isLawyer ? "advokat" : "mijoz"} redirectTo={target} telegramBot={telegramBot} />
+            <LoginForm role={isLawyer ? "advokat" : "mijoz"} redirectTo={target} channels={channels} />
           </ClientMessages>
         </div>
       </Card>

@@ -407,6 +407,20 @@ model AuditLog {
 }
 
 /// Telegram bot dialog holati (grammY session storage)
+/// Telefon raqamni Telegram orqali tasdiqlash (SMS oʻrniga): sayt tasodifiy token yaratadi,
+/// foydalanuvchi botda /start v_<token> va «Raqamni yuborish» — Telegram raqam egasini kafolatlaydi.
+model PhoneVerification {
+  id          String    @id
+  telegramId  String
+  phone       String?
+  confirmedAt DateTime?
+  usedAt      DateTime?
+  expiresAt   DateTime
+  createdAt   DateTime  @default(now())
+
+  @@index([expiresAt])
+}
+
 model BotSession {
   key       String   @id
   value     Json

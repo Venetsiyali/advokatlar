@@ -200,9 +200,16 @@
     "text": "Bu boʻlim ishlab chiqilmoqda."
   },
   "auth": {
+    "tgVerify": "Telegram orqali tasdiqlash",
+    "tgVerifyHint": "Telegram'da botimiz ochiladi — «📱 Raqamni yuborish» tugmasini bosing. SMS kerak emas, bepul.",
+    "tgWaiting": "Telegram'da raqamingizni yuboring… Tasdiqlangach, bu sahifa oʻzi davom etadi.",
+    "tgOpenAgain": "Telegram'ni qayta ochish",
+    "tgVerified": "{phone} Telegram orqali tasdiqlandi ✅",
+    "tgExpired": "Tasdiqlash muddati oʻtdi. Qaytadan urinib koʻring.",
     "title": "Kirish yoki roʻyxatdan oʻtish",
     "lawyerTitle": "Advokat sifatida qoʻshilish",
     "subtitle": "Telefon raqamingizni kiriting — SMS orqali tasdiqlash kodi yuboramiz.",
+    "subtitleTelegram": "Telefon raqamingizni Telegram orqali tasdiqlang — SMS kerak emas, bepul.",
     "lawyerSubtitle": "Roʻyxatdan oʻting, profilingizni toʻldiring va litsenziyangizni yuklang. Tekshiruvdan soʻng murojaatlar kela boshlaydi.",
     "phone": "Telefon raqam",
     "name": "Ismingiz (ixtiyoriy)",
@@ -428,6 +435,10 @@
     "invalid": "Havola notoʻgʻri yoki eskirgan."
   },
   "bot": {
+    "verifyAsk": "<b>{brand}</b> saytida telefon raqamingizni tasdiqlash uchun pastdagi «📱 Raqamni yuborish» tugmasini bosing.\n\nAgar buni siz boshlamagan boʻlsangiz, tugmani bosmang.",
+    "verifyOk": "✅ Raqamingiz tasdiqlandi. Endi saytga qayting — sahifa oʻzi davom etadi.",
+    "verifyExpired": "Tasdiqlash muddati oʻtgan. Saytda «Telegram orqali tasdiqlash» tugmasini qayta bosing.",
+    "verifyInvalid": "Bu havola eskirgan yoki notoʻgʻri. Saytda «Telegram orqali tasdiqlash» tugmasini qayta bosing.",
     "welcome": "Assalomu alaykum, {name}! 👋\n\n<b>{brand}</b> — litsenziyasi tekshirilgan advokat topish xizmati. Muammoingizni yozing — mos advokat siz bilan oʻzi bogʻlanadi. Mijozlar uchun bepul.",
     "welcomeLawyer": "Assalomu alaykum, {name}! Yangi murojaatlar shu chatga keladi.",
     "help": "Buyruqlar:\n/start — bosh menyu\n/sorov — yangi murojaat\n/murojaatlarim — mening murojaatlarim\n/til — tilni oʻzgartirish\n/bekor — dialogni bekor qilish",

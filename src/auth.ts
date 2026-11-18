@@ -4,6 +4,7 @@ import { createHash, createHmac } from "node:crypto";
 import { prisma } from "@/lib/db";
 import { normalizePhone } from "@/lib/phone";
 import { verifyOtp } from "@/lib/otp";
+import { linkTelegram } from "@/lib/tg-verify";
 import { ensureLawyerProfile } from "@/server/lawyer-onboarding";
 
 class InvalidCode extends CredentialsSignin {
@@ -39,6 +40,21 @@ export function verifyTelegramLogin(data: Record<string, string>): boolean {
   return expected === hash && fresh;
 }
 
+/**
+ * Administrator Telegram ID'si (ADMIN_TELEGRAM_ID yoki shaxsiy TELEGRAM_ADMIN_CHAT_ID) — admin hisobiga bogʻlanadi.
+ * SMS shlyuzi boʻlmasa ham admin panelga kirish imkonini beradi (Telegram ID imzo yoki bot orqali tasdiqlangan).
+ */
+async function adminByTelegram(telegramId: string) {
+  const adminTg = process.env.ADMIN_TELEGRAM_ID || process.env.TELEGRAM_ADMIN_CHAT_ID;
+  if (!adminTg || !/^\d+$/.test(adminTg) || adminTg !== telegramId) return null;
+  const adminPhone = normalizePhone(process.env.ADMIN_PHONE ?? "");
+  const byPhone = adminPhone ? await prisma.user.findUnique({ where: { phone: adminPhone } }) : null;
+  const admin = byPhone?.role === "ADMIN" ? byPhone : await prisma.user.findFirst({ where: { role: "ADMIN" }, orderBy: { createdAt: "asc" } });
+  if (!admin) return null;
+  if (admin.telegramId !== telegramId) await linkTelegram(admin.id, telegramId);
+  return { ...admin, telegramId };
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
   session: { strategy: "jwt", maxAge: 30 * 86400 },
@@ -50,7 +66,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(c) {
         const phone = normalizePhone(String(c.phone ?? ""));
         const code = String(c.code ?? "");
-        if (!phone || !(await verifyOtp(phone, code))) throw new InvalidCode();
+        const proof = phone ? await verifyOtp(phone, code) : false;
+        if (!phone || !proof) throw new InvalidCode();
+
+        // Admin Telegram orqali tasdiqlasa — raqami ADMIN_PHONE dan farq qilsa ham admin hisobiga
+        if (proof.telegramId) {
+          const admin = await adminByTelegram(proof.telegramId);
+          if (admin && !admin.isBlocked) return { id: admin.id, role: admin.role, name: admin.name, phone: admin.phone };
+        }
 
         const wantsLawyer = c.role === "advokat";
         const name = String(c.name ?? "").trim().slice(0, 80) || null;
@@ -64,6 +87,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           user = await prisma.user.update({ where: { id: user.id }, data: { name } });
         }
         if (user.role === "LAWYER") await ensureLawyerProfile(user.id);
+        // Telegram orqali tasdiqlangan boʻlsa — hisob botga bogʻlanadi (bildirishnomalar va keyingi kodlar Telegram'ga)
+        if (proof.telegramId && user.telegramId !== proof.telegramId) await linkTelegram(user.id, proof.telegramId);
         return { id: user.id, role: user.role, name: user.name, phone: user.phone };
       },
     }),
@@ -81,21 +106,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const telegramId = String(data.id);
         const name = [data.first_name, data.last_name].filter(Boolean).join(" ") || data.username || null;
         let user = await prisma.user.findUnique({ where: { telegramId } });
-        // Administrator Telegram ID'si (ADMIN_TELEGRAM_ID yoki shaxsiy TELEGRAM_ADMIN_CHAT_ID) — admin hisobiga bogʻlanadi.
-        // SMS shlyuzi ulanmagan boʻlsa ham admin panelga kirish imkonini beradi; imzo bot tokeni bilan tekshirilgan.
-        const adminTg = process.env.ADMIN_TELEGRAM_ID || process.env.TELEGRAM_ADMIN_CHAT_ID;
-        if (adminTg && /^\d+$/.test(adminTg) && adminTg === telegramId && user?.role !== "ADMIN") {
-          const adminPhone = normalizePhone(process.env.ADMIN_PHONE ?? "");
-          const byPhone = adminPhone ? await prisma.user.findUnique({ where: { phone: adminPhone } }) : null;
-          const admin = byPhone?.role === "ADMIN" ? byPhone : await prisma.user.findFirst({ where: { role: "ADMIN" }, orderBy: { createdAt: "asc" } });
-          if (admin) {
-            const [, linked] = await prisma.$transaction([
-              prisma.user.updateMany({ where: { telegramId, id: { not: admin.id } }, data: { telegramId: null } }),
-              prisma.user.update({ where: { id: admin.id }, data: { telegramId } }),
-            ]);
-            user = linked;
-          }
-        }
+        if (user?.role !== "ADMIN") user = (await adminByTelegram(telegramId)) ?? user;
         if (user?.isBlocked) throw new Blocked();
         user ??= await prisma.user.create({ data: { telegramId, name, role: "CLIENT" } });
         if (user.role === "LAWYER") await ensureLawyerProfile(user.id);

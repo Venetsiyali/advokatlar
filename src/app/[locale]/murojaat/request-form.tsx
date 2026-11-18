@@ -6,7 +6,7 @@ import { CheckCircle2, Loader2, Phone, Send } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Alert, Field, inputCls } from "@/components/forms/fields";
-import { OtpBlock, type OtpState } from "@/components/forms/otp-block";
+import { OtpBlock, otpReady, type OtpState, type PhoneChannels } from "@/components/forms/otp-block";
 import { createRequestAction, type CreateRequestState } from "@/server/request-actions";
 import { cn } from "@/lib/utils";
 import { track } from "@/lib/analytics";
@@ -19,12 +19,14 @@ export function RequestForm({
   defaults,
   phoneVerified,
   loggedIn,
+  channels,
 }: {
   regions: Region[];
   specs: { id: string; name: string }[];
   defaults: { regionId: string; specializationId: string; name: string; phone: string; targetLawyer: string };
   phoneVerified: boolean;
   loggedIn: boolean;
+  channels: PhoneChannels;
 }) {
   const t = useTranslations("request");
   const ta = useTranslations("auth");
@@ -37,7 +39,7 @@ export function RequestForm({
 
   const districts = regions.find((r) => r.id === regionId)?.districts ?? [];
   const needsOtp = !phoneVerified;
-  const canSubmit = !needsOtp || otp.code.length === 6;
+  const canSubmit = !needsOtp || otpReady(otp);
 
   // Analitika: yuborilgan murojaat (shaxsiy maʼlumotlarsiz)
   useEffect(() => {
@@ -184,7 +186,7 @@ export function RequestForm({
                 <Alert>{otpError}</Alert>
               </div>
             )}
-            <OtpBlock value={otp} onChange={setOtp} onError={setOtpError} />
+            <OtpBlock value={otp} onChange={setOtp} onError={setOtpError} channels={channels} />
           </>
         )}
       </div>
@@ -212,7 +214,7 @@ export function RequestForm({
           t("submit")
         )}
       </Button>
-      {needsOtp && !otp.sent && <p className="text-center text-xs text-slate-500">{ta("subtitle")}</p>}
+      {needsOtp && !otp.sent && <p className="text-center text-xs text-slate-500">{ta(channels.sms ? "subtitle" : "subtitleTelegram")}</p>}
     </form>
   );
 }

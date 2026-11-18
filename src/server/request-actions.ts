@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { normalizePhone } from "@/lib/phone";
 import { verifyOtp } from "@/lib/otp";
+import { linkTelegram } from "@/lib/tg-verify";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { ALLOWED_DOC_TYPES, storeFile } from "@/lib/storage";
 import { createRequestRecord } from "./requests";
@@ -17,7 +18,8 @@ export type CreateRequestState =
 const Schema = z.object({
   name: z.string().trim().min(2).max(80),
   phone: z.string().max(32),
-  code: z.string().max(6).optional().default(""),
+  // 6 xonali kod yoki Telegram isboti ("tg:<token>")
+  code: z.string().max(60).optional().default(""),
   regionId: z.string().min(1).max(40),
   districtId: z.string().max(40).optional().default(""),
   specializationId: z.string().min(1).max(40),
@@ -57,8 +59,8 @@ export async function createRequestAction(_prev: CreateRequestState, fd: FormDat
 
   // Telefon tasdigʻi: kirgan foydalanuvchining oʻz raqami boʻlsa — OTP shart emas
   const current = await getCurrentUser();
-  const phoneOk = current?.phone === phone || (await verifyOtp(phone, d.code));
-  if (!phoneOk) return { status: "error", error: "OTP" };
+  const proof = current?.phone === phone ? {} : await verifyOtp(phone, d.code);
+  if (!proof) return { status: "error", error: "OTP" };
 
   let attachmentKey: string | undefined;
   const file = fd.get("attachment");
@@ -74,6 +76,8 @@ export async function createRequestAction(_prev: CreateRequestState, fd: FormDat
   let client = current?.phone === phone ? current : await prisma.user.findUnique({ where: { phone } });
   if (client?.isBlocked) return { status: "error", error: "RATE" };
   client ??= await prisma.user.create({ data: { phone, name: d.name, role: "CLIENT" } });
+  // Telegram orqali tasdiqlagan mijoz — murojaat holati haqidagi xabarlar botga keladi
+  if (proof.telegramId && client.telegramId !== proof.telegramId) await linkTelegram(client.id, proof.telegramId);
 
   const { request, sent } = await createRequestRecord({
     clientId: client.id,

@@ -210,6 +210,29 @@ async function main() {
   await prisma.subscription.update({ where: { id: sub.id }, data: { endsAt: sub.endsAt, remindedAt: null } });
   console.log("✓ obuna eslatmasi (3 kun oldin, bir marta)");
 
+  // ---- 6. Saytdagi telefon tasdigʻi (SMS oʻrniga) ----
+  const VTG = 777000111;
+  const token = "simVerifyToken_abcdefghijklmn";
+  await prisma.phoneVerification.deleteMany({ where: { telegramId: { in: [String(VTG), String(VTG + 1)] } } });
+  out = await send(VTG, `/start v_${token}`);
+  assert.match(texts(out), /tasdiqlash uchun/);
+  assert.ok(JSON.stringify(out).includes("request_contact"), "kontakt tugmasi koʻrsatiladi");
+  out = await send(VTG, "901112233");
+  assert.match(texts(out), /tugmasidan foydalaning/, "raqamni qoʻlda yozish qabul qilinmaydi");
+  out = await contact(VTG, "+998901112233", 999);
+  assert.match(texts(out), /oʻz raqamingiz/, "birovning kontakti rad etiladi");
+  out = await contact(VTG, "998901112233");
+  assert.match(texts(out), /tasdiqlandi/);
+  const v = await prisma.phoneVerification.findUniqueOrThrow({ where: { id: token } });
+  assert.equal(v.phone, "+998901112233");
+  assert.ok(v.confirmedAt);
+  out = await send(VTG + 1, `/start v_${token}`);
+  assert.match(texts(out), /eskirgan yoki notoʻgʻri/, "token boshqa Telegram hisobiga oʻtmaydi");
+  out = await send(VTG, "/start v_short");
+  assert.match(texts(out), /eskirgan yoki notoʻgʻri/);
+  await prisma.phoneVerification.deleteMany({ where: { telegramId: { in: [String(VTG), String(VTG + 1)] } } });
+  console.log("✓ saytdagi telefon tasdigʻi: faqat oʻz kontakti, token boshqa hisobga oʻtmaydi");
+
   console.log("\nBarcha bot ssenariylari muvaffaqiyatli ✔");
 }
 

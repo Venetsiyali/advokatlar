@@ -7,6 +7,7 @@ import { alternates } from "@/lib/seo";
 import { getRegions, getSpecializations } from "@/server/lawyers";
 import { getCurrentUser } from "@/server/session";
 import { formatPhone } from "@/lib/phone";
+import { phoneChannels } from "@/lib/tg-verify";
 import { RequestForm } from "./request-form";
 import { ClientMessages } from "@/components/client-messages";
 
@@ -72,6 +73,7 @@ export default async function RequestPage({ params, searchParams }: Props) {
             }}
             phoneVerified={Boolean(user?.phone)}
             loggedIn={Boolean(user)}
+            channels={phoneChannels()}
           />
         </ClientMessages>
       </Card>

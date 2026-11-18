@@ -4,6 +4,7 @@ import { prisma } from "./db";
 import { sendSms, smsMockMode } from "./sms";
 import { sendTelegram, telegramMockMode } from "./telegram";
 import { botT } from "./bot-i18n";
+import { TG_PROOF_PREFIX, consumeTelegramProof } from "./tg-verify";
 
 const TTL_MS = 5 * 60_000;
 const MAX_ATTEMPTS = 5;
@@ -49,8 +50,12 @@ export async function sendOtp(phone: string): Promise<SendOtpResult> {
   return { ok: true, channel: viaTelegram ? "telegram" : "sms", ...(devEcho() && { devCode: code }) };
 }
 
-/** Kodni tekshiradi va muvaffaqiyatli boʻlsa “ishlatilgan” deb belgilaydi */
-export async function verifyOtp(phone: string, code: string): Promise<boolean> {
+/**
+ * Telefon tasdigʻini tekshiradi va bir martalik ishlatadi: 6 xonali SMS/Telegram kodi yoki
+ * Telegram bot orqali tasdiqlash isboti ("tg:<token>"). Muvaffaqiyatda obyekt (Telegram isbotida — telegramId).
+ */
+export async function verifyOtp(phone: string, code: string): Promise<false | { telegramId?: string }> {
+  if (code.startsWith(TG_PROOF_PREFIX)) return (await consumeTelegramProof(phone, code)) ?? false;
   if (!/^\d{6}$/.test(code)) return false;
   const rec = await prisma.otpCode.findFirst({
     where: { phone, usedAt: null, expiresAt: { gt: new Date() } },
@@ -66,5 +71,5 @@ export async function verifyOtp(phone: string, code: string): Promise<boolean> {
   }
   // Poyga holatidan himoya: faqat bitta soʻrov kodni “ishlatishi” mumkin
   const res = await prisma.otpCode.updateMany({ where: { id: rec.id, usedAt: null }, data: { usedAt: new Date() } });
-  return res.count === 1;
+  return res.count === 1 ? {} : false;
 }
